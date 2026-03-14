@@ -1,0 +1,2 @@
+revolut payyment successful -> redirect to success screen (currently the schedule does not work because after payment it does not reach success screen.
+apple pay not working on the phone.

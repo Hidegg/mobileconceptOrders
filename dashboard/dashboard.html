@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Concept GSM — Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23151518'/><text x='50' y='68' font-size='50' font-family='Arial' font-weight='bold' fill='%231e73be' text-anchor='middle'>MC</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+
+:root{
+  /* Deep purple-black dark theme — the darkness itself is purple */
+  --bg:#080518;
+  --surface:#0f0a24;
+  --surface2:#17123a;
+  --border:#221b4a;
+  --border2:#342855;
+  --text:#f2eaff;
+  --text2:#c9aef5;
+  --text3:#9878d8;
+  --purple:#C264FF;
+  --purple-dim:rgba(194,100,255,.15);
+  --purple-up:#D480FF;
+  --purple-glow:rgba(194,100,255,.45);
+  --green:#61CE70;
+  --green-dim:rgba(97,206,112,.13);
+  --orange:#f59e0b;
+  --orange-dim:rgba(245,158,11,.12);
+  --red:#ef4444;
+  --header:#040210;
+  --r:10px;
+  --shadow:0 2px 20px rgba(0,0,0,.6);
+}
+
+body{
+  font-family:'Montserrat',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* ══ AMBIENT ORBS ════════════════════════════════════ */
+#bg-orbs{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;overflow:hidden;
+}
+.orb{
+  position:absolute;border-radius:50%;
+  will-change:transform;
+}
+#orb1{
+  width:900px;height:900px;
+  background:radial-gradient(circle,rgba(194,100,255,.22) 0%,transparent 65%);
+  top:-320px;left:-220px;
+}
+#orb2{
+  width:740px;height:740px;
+  background:radial-gradient(circle,rgba(255,80,200,.16) 0%,transparent 65%);
+  bottom:-200px;right:-200px;
+}
+#orb3{
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(140,60,255,.18) 0%,transparent 65%);
+  top:42%;left:52%;transform:translate(-50%,-50%);
+}
+
+/* ══ HEADER (sticky, combined with nav) ══════════════ */
+.app-header{
+  background:var(--header);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;flex-shrink:0;
+}
+.header-inner{
+  width:100%;padding:0 16px;
+  display:flex;align-items:stretch;gap:16px;
+}
+.header-brand{
+  display:flex;align-items:center;gap:14px;
+  padding:11px 0;flex-shrink:0;
+}
+.brand-logo{height:34px;width:auto;display:block;filter:brightness(0) invert(1)}
+.brand-name{
+  font-size:.85rem;font-weight:700;color:var(--text);
+  letter-spacing:-.2px;line-height:1.2;
+}
+.brand-name em{color:var(--purple);font-style:normal}
+.brand-sub{font-size:.58rem;color:var(--text3);letter-spacing:.6px;font-weight:600;margin-top:2px;text-transform:uppercase}
+
+.header-nav{display:flex;align-items:stretch;flex:1}
+.nav-tab{
+  background:none;border:none;cursor:pointer;
+  padding:0 22px;
+  font-family:'Montserrat',sans-serif;font-size:.78rem;font-weight:600;
+  color:var(--text3);letter-spacing:.3px;
+  border-bottom:2px solid transparent;
+  transition:color .18s,border-color .18s;
+  white-space:nowrap;
+}
+.nav-tab:hover{color:var(--text2)}
+.nav-tab.active{
+  color:var(--purple);
+  border-bottom-color:var(--purple);
+  text-shadow:0 0 18px rgba(194,100,255,.5);
+}
+
+.conn-pill{
+  display:flex;align-items:center;
+  background:rgba(194,100,255,.07);border:1px solid var(--border);
+  border-radius:9999px;padding:9px;
+  align-self:center;flex-shrink:0;
+}
+.conn-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--text3);
+  transition:background .4s,box-shadow .4s;
+}
+.conn-dot.online{background:var(--purple);box-shadow:0 0 8px rgba(194,100,255,.14)}
+.conn-dot.offline{background:var(--red)}
+
+/* ══ MAIN ════════════════════════════════════════════ */
+.main{width:100%;padding:0 20px 60px;flex:1;position:relative;z-index:1}
+.page{display:none}
+.page.active{display:block}
+
+/* ══ STATS GRID ══════════════════════════════════════ */
+.stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+  padding:18px 0 12px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 16px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.stat-card:hover{border-color:rgba(194,100,255,.3);box-shadow:0 0 20px rgba(194,100,255,.06)}
+.stat-label{
+  font-size:.59rem;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.9px;margin-bottom:9px;
+}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--text);line-height:1}
+.stat-value.c-purple{color:var(--purple)}
+.stat-value.c-green{color:var(--green)}
+.stat-value.c-orange{color:var(--orange)}
+
+/* ══ SUB-TABS ════════════════════════════════════════ */
+.sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{
+  background:none;border:none;cursor:pointer;
+  padding:10px 14px;
+  font-family:'Montserrat',sans-serif;font-size:.76rem;font-weight:600;
+  color:var(--text3);letter-spacing:.3px;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:color .18s,border-color .18s;
+}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--text);border-bottom-color:var(--purple)}
+
+/* ══ FILTER BAR ══════════════════════════════════════ */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-search{
+  flex:1;min-width:160px;
+  padding:9px 14px;
+  border:1px solid var(--border);border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.78rem;
+  color:var(--text);background:var(--surface);outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.filter-search:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-dim)}
+.filter-search::placeholder{color:var(--text3)}
+.filter-select-wrap{position:relative;flex-shrink:0}
+.filter-select{
+  padding:9px 28px 9px 14px;
+  border:1px solid var(--border);border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:600;
+  color:var(--text2);background:var(--surface);
+  cursor:pointer;outline:none;
+  appearance:none;-webkit-appearance:none;
+  transition:border-color .2s;
+}
+.filter-select:focus{border-color:var(--purple)}
+.filter-select-wrap::after{
+  content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--text3);pointer-events:none;font-size:.68rem;
+}
+.btn-export{
+  padding:9px 18px;border:1px solid var(--border);border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:600;
+  cursor:pointer;background:transparent;color:var(--text2);
+  transition:background .18s,color .18s,border-color .18s;
+  white-space:nowrap;flex-shrink:0;
+}
+.btn-export:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.btn-revert{background:var(--orange-dim)!important;color:var(--orange)!important;border:1px solid rgba(245,158,11,.25)!important}
+.btn-revert:hover{background:var(--orange)!important;color:#fff!important}
+
+/* ══ ORDERS LIST ═════════════════════════════════════ */
+.orders-list{display:flex;flex-direction:column;gap:16px}
+
+/* ══ ORDER CARD ══════════════════════════════════════ */
+.order-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 16px 14px;
+  transition:border-color .25s,box-shadow .25s;
+}
+.order-card:hover{
+  border-color:rgba(194,100,255,.3);
+  box-shadow:0 4px 24px rgba(194,100,255,.08),0 2px 8px rgba(0,0,0,.4);
+}
+
+.order-top{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:14px;flex-wrap:wrap;
+}
+.order-id{
+  font-weight:700;font-size:.76rem;
+  font-family:'Courier New',monospace;letter-spacing:.3px;
+}
+.order-amount{
+  margin-left:auto;font-weight:700;
+  color:var(--purple);font-size:.88rem;
+  text-shadow:0 0 14px rgba(194,100,255,.4);
+}
+
+.badge{
+  font-size:.63rem;font-weight:700;
+  padding:3px 10px;border-radius:9999px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.badge-in_lucru{background:var(--purple-dim);color:var(--purple)}
+.badge-completed{background:var(--green-dim);color:var(--green)}
+
+/* ── Timeline ── */
+.timeline{display:flex;align-items:center;margin:10px 0 16px}
+.tl-step{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+.tl-dot{
+  width:8px;height:8px;border-radius:50%;
+  border:2px solid var(--border2);background:var(--surface);
+  transition:background .2s,border-color .2s,box-shadow .2s;
+}
+.tl-dot.done{background:var(--purple);border-color:var(--purple)}
+.tl-dot.active{background:var(--purple);border-color:var(--purple-up);box-shadow:0 0 10px var(--purple-glow)}
+.tl-label{font-size:.6rem;color:var(--text3);margin-top:4px;white-space:nowrap;font-weight:500}
+.tl-label.done{color:var(--purple)}
+.tl-label.active{color:var(--purple);font-weight:700}
+.tl-time{font-size:.55rem;color:var(--text3);margin-top:1px}
+.tl-line{flex:1;height:2px;background:var(--border);min-width:28px;margin:0 3px;margin-bottom:22px}
+.tl-line.done{background:var(--purple)}
+
+/* ── Order details ── */
+.order-lines{margin-bottom:12px}
+.order-line{
+  display:flex;justify-content:space-between;
+  padding:7px 0;border-bottom:1px solid var(--border);font-size:.76rem;
+}
+.order-line:last-child{border:none}
+.order-line .lbl{color:var(--text2)}
+.order-line .val{font-weight:600}
+
+.order-services{margin-bottom:6px}
+.order-svc-item{
+  display:flex;justify-content:space-between;
+  padding:5px 0;font-size:.76rem;
+}
+
+.order-total{
+  border-top:1px solid var(--border2);
+  padding-top:12px;margin-top:6px;
+  display:flex;justify-content:space-between;
+  font-weight:700;font-size:.84rem;
+}
+.order-total .val{color:var(--purple)}
+
+/* ── Notes ── */
+.order-notes{
+  margin-top:12px;padding:10px 14px;
+  background:var(--surface2);border-radius:7px;border-left:2px solid var(--border2);
+  font-size:.74rem;color:var(--text2);line-height:1.5;
+  white-space:pre-wrap;
+}
+.order-notes:empty{display:none}
+.notes-input-row{display:none;margin-top:12px}
+.notes-input-row.open{display:flex;flex-direction:column;gap:6px}
+.notes-input{
+  width:100%;padding:9px 12px;
+  border:1px solid var(--border2);border-radius:8px;
+  font-family:'Montserrat',sans-serif;font-size:.76rem;
+  color:var(--text);background:var(--surface2);
+  resize:vertical;min-height:64px;outline:none;
+  line-height:1.5;
+  transition:border-color .2s,box-shadow .2s;
+}
+.notes-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-dim)}
+.notes-input::placeholder{color:var(--text3)}
+.notes-save{
+  align-self:flex-start;
+  padding:7px 18px;
+  border:none;border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.72rem;font-weight:600;
+  cursor:pointer;
+  background:var(--purple);color:#fff;
+  box-shadow:0 0 14px rgba(194,100,255,.09);
+  transition:background .18s,box-shadow .18s;
+}
+.notes-save:hover{background:var(--purple-up);box-shadow:0 0 22px rgba(194,100,255,.15)}
+.notes-save.saved{background:var(--green);box-shadow:0 0 14px rgba(97,206,112,.09)}
+
+/* ── Actions ── */
+.order-actions{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.order-actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.order-actions button{
+  padding:7px 15px;border:none;border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:600;
+  cursor:pointer;letter-spacing:.3px;
+  transition:background .18s,color .18s,border-color .18s,box-shadow .18s;
+}
+.btn-complete{
+  background:var(--purple);color:#fff;
+  box-shadow:0 0 16px rgba(194,100,255,.12),0 4px 12px rgba(0,0,0,.4);
+}
+.btn-complete:hover{background:var(--purple-up);box-shadow:0 0 26px rgba(194,100,255,.18),0 4px 16px rgba(0,0,0,.5)}
+.btn-notes{
+  background:transparent;color:var(--text2);
+  border:1px solid var(--border2)!important;
+}
+.btn-notes:hover{background:var(--surface2);color:var(--text)}
+.btn-whatsapp{background:#25d366;color:#fff}
+.btn-whatsapp:hover{background:#1ebe57}
+.btn-print{
+  background:transparent;color:var(--text2);
+  border:1px solid var(--border2)!important;
+}
+.btn-print:hover{background:var(--surface2);color:var(--text)}
+.btn-delete{
+  background:transparent;color:var(--red);
+  border:1px solid rgba(239,68,68,.25)!important;
+}
+.btn-delete:hover{background:rgba(239,68,68,.12);border-color:var(--red)!important}
+
+/* ══ EMPTY STATE ═════════════════════════════════════ */
+.empty-state{
+  text-align:center;padding:52px 20px;
+  color:var(--text3);font-size:.82rem;font-weight:500;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+}
+
+/* ══ ANALYTICS ═══════════════════════════════════════ */
+.daily-summary{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:24px;
+  margin-top:20px;margin-bottom:16px;
+}
+.daily-summary h3,
+.chart-card h3{
+  font-size:.59rem;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.9px;margin-bottom:14px;
+}
+.daily-row{
+  display:flex;justify-content:space-between;
+  padding:11px 0;border-bottom:1px solid var(--border);
+  font-size:.82rem;
+}
+.daily-row:last-child{border:none}
+.daily-row .lbl{color:var(--text2);font-weight:500}
+.daily-row .val{font-weight:700}
+
+.analytics-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:8px}
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px 20px;
+}
+.chart-card.full{grid-column:1/-1}
+.charts-row-3{
+  grid-column:1/-1;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+}
+.chart-wrap{
+  position:relative;width:100%;max-height:240px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ══ TOAST ═══════════════════════════════════════════ */
+.toast{
+  position:fixed;top:68px;right:20px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--purple);
+  color:var(--text);
+  padding:14px 18px;border-radius:var(--r);
+  font-size:.79rem;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(194,100,255,.1);
+  transform:translateX(calc(100% + 28px));
+  transition:transform .32s cubic-bezier(.25,.8,.25,1);
+  z-index:100;max-width:300px;
+}
+.toast.show{transform:translateX(0)}
+.toast .toast-title{font-weight:700;margin-bottom:3px;color:var(--purple);font-size:.8rem}
+.toast .toast-sub{color:var(--text2);font-size:.71rem}
+
+/* ══ FOOTER ══════════════════════════════════════════ */
+.app-footer{
+  background:var(--header);border-top:1px solid var(--border);
+  padding:16px 0;text-align:center;
+  font-size:.69rem;color:var(--text3);letter-spacing:.2px;
+  flex-shrink:0;position:relative;z-index:2;
+}
+.app-footer a{color:var(--purple);text-decoration:none}
+.app-footer a:hover{color:var(--purple-up)}
+
+/* ══ LOGIN OVERLAY ═══════════════════════════════════ */
+#login-overlay{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+  padding:20px;
+}
+.login-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:40px 36px;
+  width:100%;max-width:360px;
+  box-shadow:0 8px 48px rgba(0,0,0,.7),0 0 60px rgba(194,100,255,.08);
+  display:flex;flex-direction:column;align-items:center;
+  gap:20px;
+}
+.login-logo{
+  width:48px;height:48px;
+  background:var(--purple-dim);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;font-weight:800;color:var(--purple);
+  letter-spacing:-1px;
+}
+.login-title{
+  font-size:1.05rem;font-weight:700;color:var(--text);
+  text-align:center;line-height:1.3;
+}
+.login-pin-wrap{
+  position:relative;width:100%;
+}
+.login-pin{
+  width:100%;padding:13px 16px;
+  border:1px solid var(--border2);border-radius:10px;
+  background:var(--surface2);
+  font-family:'Montserrat',sans-serif;font-size:.95rem;font-weight:600;
+  color:var(--text);outline:none;letter-spacing:4px;text-align:center;
+  transition:border-color .2s,box-shadow .2s;
+}
+.login-pin:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-dim)}
+.login-pin::placeholder{letter-spacing:0;font-weight:400;color:var(--text3)}
+.login-btn{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  font-family:'Montserrat',sans-serif;font-size:.85rem;font-weight:700;
+  cursor:pointer;
+  background:var(--purple);color:#fff;
+  box-shadow:0 0 24px rgba(194,100,255,.12);
+  transition:background .18s,box-shadow .18s,transform .12s;
+}
+.login-btn:hover{background:var(--purple-up);box-shadow:0 0 36px rgba(194,100,255,.18)}
+.login-btn:active{transform:scale(.98)}
+.login-error{
+  font-size:.74rem;color:var(--red);font-weight:600;
+  min-height:1em;text-align:center;
+}
+
+/* ══ PRINT ═══════════════════════════════════════════ */
+@media print{
+  body>*{display:none!important}
+  #print-area{display:block!important}
+  #print-area .order-card{border:1px solid #ccc;box-shadow:none;page-break-inside:avoid}
+  #print-area .order-actions{display:none}
+  #print-area .notes-input-row{display:none}
+}
+#print-area{display:none}
+
+/* ══ RESPONSIVE — mobile-first ═══════════════════════ */
+
+/* Hide brand subtitle on small screens */
+@media(max-width:480px){
+  .brand-sub{display:none}
+  .brand-name{font-size:.78rem}
+  .nav-tab{padding:0 12px;font-size:.72rem}
+  .conn-pill{padding:4px 10px}
+}
+
+/* Tablet — 640px+ */
+@media(min-width:640px){
+  .header-inner{padding:0 24px;gap:20px}
+  .main{padding:0 24px 52px}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .analytics-grid{grid-template-columns:1fr 1fr}
+}
+
+/* Desktop — 1024px+ */
+@media(min-width:1024px){
+  .header-inner{padding:0 40px}
+  .main{padding:0 40px 52px}
+  .orders-list{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    align-items:start;
+  }
+}
+
+/* Wide — 1440px+ */
+@media(min-width:1440px){
+  .header-inner{padding:0 clamp(40px,5vw,80px)}
+  .main{padding:0 clamp(40px,5vw,80px) 52px}
+  .stats{gap:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN OVERLAY ═════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">MC</div>
+    <div class="login-title">Mobile Concept GSM</div>
+    <div class="login-pin-wrap">
+      <input type="password" class="login-pin" id="login-pin" placeholder="Password" maxlength="20"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="doLogin()">Autentificare</button>
+  </div>
+</div>
+
+<!-- Ambient background orbs -->
+<div id="bg-orbs" aria-hidden="true">
+  <div class="orb" id="orb1"></div>
+  <div class="orb" id="orb2"></div>
+  <div class="orb" id="orb3"></div>
+</div>
+
+<!-- ══ HEADER + NAV (combined) ═══════════════════════ -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <img src="https://mobileconceptgsm.ro/wp-content/uploads/2024/11/mobile-concept-gsm-service-gsm-sector-2-reparatii-iphone-reparatii-samsung-2.png" alt="Mobile Concept GSM" class="brand-logo">
+      <div>
+        <div class="brand-name">Mobile Concept <em>GSM</em></div>
+        <div class="brand-sub">Panou de control</div>
+      </div>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-tab active" data-page="orders" onclick="switchPage('orders')">Comenzi</button>
+      <button class="nav-tab" data-page="analytics" onclick="switchPage('analytics')">Analitice</button>
+    </nav>
+    <div class="conn-pill">
+      <div class="conn-dot" id="conn-dot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ MAIN ═══════════════════════════════════════ -->
+<div class="main">
+
+  <!-- ORDERS PAGE -->
+  <div class="page active" id="page-orders">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Comenzi Azi</div>
+        <div class="stat-value" id="stat-today">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In Lucru</div>
+        <div class="stat-value c-orange" id="stat-in-lucru">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Finalizate Azi</div>
+        <div class="stat-value c-green" id="stat-completed">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Venit Azi</div>
+        <div class="stat-value c-purple" id="stat-revenue">RON 0</div>
+      </div>
+    </div>
+
+    <div class="sub-tabs">
+      <button class="tab active" data-tab="active" onclick="switchTab('active')">In Lucru</button>
+      <button class="tab" data-tab="history" onclick="switchTab('history')">Finalizate</button>
+    </div>
+
+    <div class="filter-bar">
+      <input type="search" class="filter-search" id="search-input" placeholder="Cauta dupa ID, client, telefon sau model...">
+      <div class="filter-select-wrap">
+        <select class="filter-select" id="filter-brand">
+          <option value="all">Toate brandurile</option>
+          <option value="iphone">iPhone</option>
+          <option value="samsung">Samsung</option>
+          <option value="alte dispozitive">Alte</option>
+        </select>
+      </div>
+      <div class="filter-select-wrap">
+        <select class="filter-select" id="filter-date">
+          <option value="all">Toate datele</option>
+          <option value="today">Azi</option>
+          <option value="week">Ultimele 7 zile</option>
+        </select>
+      </div>
+      <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <div class="orders-list" id="orders-active"></div>
+    <div class="orders-list" id="orders-history" style="display:none"></div>
+  </div>
+
+  <!-- ANALYTICS PAGE -->
+  <div class="page" id="page-analytics">
+
+    <div class="daily-summary">
+      <h3>Sumar Zilnic</h3>
+      <div class="daily-row"><span class="lbl">Comenzi primite</span><span class="val" id="ds-count">0</span></div>
+      <div class="daily-row"><span class="lbl">Finalizate</span><span class="val" id="ds-completed">0</span></div>
+      <div class="daily-row"><span class="lbl">Venit total</span><span class="val" id="ds-revenue">RON 0</span></div>
+      <div class="daily-row"><span class="lbl">Comanda medie</span><span class="val" id="ds-avg">RON 0</span></div>
+      <div class="daily-row"><span class="lbl">Interval popular</span><span class="val" id="ds-slot">—</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Reparatii</div>
+        <div class="stat-value" id="astat-rep">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inlocuiri &amp; Daune</div>
+        <div class="stat-value" id="astat-inl">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Software &amp; Diagnostic</div>
+        <div class="stat-value" id="astat-swd">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Venit</div>
+        <div class="stat-value c-purple" id="astat-rev">RON 0</div>
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+      <div class="chart-card">
+        <h3>Comenzi per Categorie</h3>
+        <div class="chart-wrap"><canvas id="chart-cat-count"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Venit per Categorie</h3>
+        <div class="chart-wrap"><canvas id="chart-cat-revenue"></canvas></div>
+      </div>
+      <div class="charts-row-3">
+        <div class="chart-card">
+          <h3>Comenzi per Interval Orar</h3>
+          <div class="chart-wrap"><canvas id="chart-slots"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Venit per Zi a Saptamanii</h3>
+          <div class="chart-wrap"><canvas id="chart-weekday"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Venit Lunar</h3>
+          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══ FOOTER ═════════════════════════════════════ -->
+<footer class="app-footer">
+  &copy; 2026 Mobile Concept GSM &bull; <a href="https://mobileconceptgsm.ro" target="_blank">mobileconceptgsm.ro</a>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toast-title"></div>
+  <div class="toast-sub" id="toast-sub"></div>
+</div>
+
+<!-- Print area -->
+<div id="print-area"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const API = "";
+let currentTab = "active";
+let knownOrderIds = new Set();
+let firstLoad = true;
+let allOrders = [];
+let pageInitialized = false;
+let isAuthenticated = false;
+let authToken = sessionStorage.getItem("gsm-auth-token") || "";
+
+function apiFetch(url, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  if (authToken) headers["X-Auth-Token"] = authToken;
+  return fetch(url, { ...opts, headers });
+}
+
+// Chart instances
+let chartCatCount = null;
+let chartCatRevenue = null;
+let chartSlots = null;
+let chartWeekday = null;
+let chartMonthly = null;
+
+const CAT_COLORS = {
+  "Reparatii": "#C264FF",
+  "Inlocuiri & Daune": "#61CE70",
+  "Software & Diagnostic": "#6EC1E4",
+};
+
+const SLOTS = ["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+// ── Notification sound + toast together ──
+const chimeAudio = new Audio("/notification.mp3");
+chimeAudio.preload = "auto";
+chimeAudio.volume = 0.5;
+
+function unlockAudio() {
+  const s = chimeAudio.cloneNode();
+  s.volume = 0;
+  s.play().then(() => s.pause()).catch(() => {});
+}
+
+function playNotification(title, sub) {
+  const s = chimeAudio.cloneNode();
+  s.volume = 0.5;
+  s.play().catch(() => {});
+  showToast(title, sub);
+}
+
+// ── Restore saved tab ──
+const savedPage = localStorage.getItem("gsm-dash-page");
+if (savedPage) switchPage(savedPage);
+
+// ── Auth ──
+
+function showLoginOverlay() {
+  document.getElementById("login-overlay").style.display = "flex";
+}
+function hideLoginOverlay() {
+  document.getElementById("login-overlay").style.display = "none";
+}
+
+async function checkAuth() {
+  try {
+    const res = await apiFetch(`${API}/api/me`);
+    const data = await res.json();
+    if (data.authenticated) {
+      isAuthenticated = true;
+      hideLoginOverlay();
+      fetchAll();
+    } else {
+      sessionStorage.removeItem("gsm-auth-token");
+      authToken = "";
+      showLoginOverlay();
+    }
+  } catch (e) { showLoginOverlay(); }
+}
+
+async function doLogin() {
+  const pin = document.getElementById("login-pin").value;
+  const errEl = document.getElementById("login-error");
+  errEl.textContent = "";
+  try {
+    const res = await fetch(`${API}/api/auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      authToken = data.token || "";
+      sessionStorage.setItem("gsm-auth-token", authToken);
+      isAuthenticated = true;
+      unlockAudio();
+      hideLoginOverlay();
+      fetchAll();
+    } else {
+      errEl.textContent = "Parola incorecta";
+      document.getElementById("login-pin").value = "";
+    }
+  } catch (e) { errEl.textContent = "Eroare de conexiune"; }
+}
+
+// ── HTTP fallback — load data immediately on page open ──
+async function fetchAll() {
+  try {
+    const [ordersRes, statsRes, analyticsRes] = await Promise.all([
+      apiFetch(`${API}/api/orders`),
+      apiFetch(`${API}/api/orders/stats`),
+      apiFetch(`${API}/api/analytics`),
+    ]);
+    if (ordersRes.status === 401) { showLoginOverlay(); return; }
+    const orders    = await ordersRes.json();
+    const stats     = await statsRes.json();
+    const analytics = await analyticsRes.json();
+    allOrders = orders;
+    updateStats(stats);
+    applyFilters();
+    updateAnalytics(analytics);
+    updateDailySummary(stats);
+    knownOrderIds = new Set(orders.map(o => o.id));
+    firstLoad = false;
+  } catch (e) { console.warn("fetchAll failed:", e); }
+}
+checkAuth();
+
+// ── WebSocket ──
+const socket = io();
+
+socket.on("refresh", (data) => {
+  if (!isAuthenticated) return;
+  updateStats(data.stats);
+  allOrders = data.orders;
+  applyFilters();
+  updateAnalytics(data.analytics);
+  updateDailySummary(data.stats);
+
+  if (!firstLoad) {
+    const newOrders = data.orders.filter(o => !knownOrderIds.has(o.id));
+    if (newOrders.length > 0) {
+      const o = newOrders[0];
+      // Flash the new card with a purple glow burst
+      requestAnimationFrame(() => {
+        const card = document.getElementById(`card-${o.id}`);
+        if (card) {
+          gsap.fromTo(card,
+            { boxShadow: "0 0 0px rgba(194,100,255,0)", borderColor: "rgba(194,100,255,0)" },
+            {
+              boxShadow: "0 0 44px rgba(194,100,255,.55), 0 0 88px rgba(194,100,255,.15)",
+              borderColor: "rgba(194,100,255,.75)",
+              duration: 0.38, yoyo: true, repeat: 5, ease: "power2.inOut",
+              onComplete: () => gsap.set(card, { clearProps: "boxShadow,borderColor" })
+            }
+          );
+        }
+      });
+      const title = `Comanda noua: ${o.id}`;
+      const sub = `RON ${o.amount} \u2014 ${o.services.map(s => s.name || s).join(", ")}`;
+      setTimeout(() => playNotification(title, sub), 2000);
+    }
+  }
+  firstLoad = false;
+  knownOrderIds = new Set(data.orders.map(o => o.id));
+});
+
+// ── Filter + Search ──
+
+function applyFilters() {
+  let orders = [...allOrders];
+
+  const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+  const brand = document.getElementById("filter-brand")?.value || "all";
+  const dateRange = document.getElementById("filter-date")?.value || "all";
+
+  if (q) {
+    orders = orders.filter(o =>
+      (o.id || "").toLowerCase().includes(q) ||
+      (o.customer_name || "").toLowerCase().includes(q) ||
+      (o.customer_phone || "").includes(q) ||
+      (o.model || "").toLowerCase().includes(q)
+    );
+  }
+
+  if (brand !== "all") {
+    orders = orders.filter(o => (o.brand || "").toLowerCase() === brand);
+  }
+
+  if (dateRange === "today") {
+    const today = new Date().toISOString().slice(0, 10);
+    orders = orders.filter(o => (o.created_at || "").startsWith(today));
+  } else if (dateRange === "week") {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+    orders = orders.filter(o => o.created_at && new Date(o.created_at) >= cutoff);
+  }
+
+  renderOrders(orders);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // ── Filter listeners ──
+  document.getElementById("search-input")?.addEventListener("input", applyFilters);
+  document.getElementById("filter-brand")?.addEventListener("change", applyFilters);
+  document.getElementById("filter-date")?.addEventListener("change", applyFilters);
+
+  if (typeof gsap !== "undefined") {
+    // ── Ambient orb drift (slow, infinite, sine) ──
+    gsap.to("#orb1", { x: 110, y: 90,  duration: 14, ease: "sine.inOut", repeat: -1, yoyo: true });
+    gsap.to("#orb2", { x: -90, y: -70, duration: 17, ease: "sine.inOut", repeat: -1, yoyo: true, delay: 5 });
+    gsap.to("#orb3", { scale: 1.35, opacity: 0.55, duration: 12, ease: "sine.inOut", repeat: -1, yoyo: true, delay: 2 });
+    // ── Page load entrance ──
+    gsap.from(".app-header, .stat-card, .sub-tabs, .filter-bar", {
+      opacity: 0, y: 14, duration: 0.45, ease: "power2.out",
+      onComplete() { pageInitialized = true; }
+    });
+  } else {
+    pageInitialized = true;
+  }
+});
+
+// ── CSV Export ──
+
+function exportCSV() {
+  const rows = [
+    ["ID", "Client", "Telefon", "Model", "Brand", "Data programata", "Ora", "Servicii", "Total (RON)", "Status", "Creat la", "Finalizat la"],
+    ...allOrders.map(o => [
+      o.id,
+      o.customer_name || "",
+      o.customer_phone || "",
+      o.model || "",
+      o.brand || "",
+      o.date,
+      o.time_slot || "",
+      o.services.map(s => s.name || s).join("; "),
+      o.amount,
+      o.status,
+      o.created_at || "",
+      o.completed_at || "",
+    ]),
+  ];
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `comenzi-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── Revert order ──
+
+async function revertOrder(orderId) {
+  try {
+    await apiFetch(`${API}/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "in_lucru" }),
+    });
+  } catch (err) { console.error("Revert error:", err); }
+}
+
+// ── Delete order ──
+
+async function deleteOrder(orderId) {
+  if (!confirm(`Stergi comanda ${orderId}? Actiunea este ireversibila.`)) return;
+  try {
+    await apiFetch(`${API}/api/orders/${orderId}`, { method: "DELETE" });
+  } catch (err) { console.error("Delete error:", err); }
+}
+
+// ── Page / Tab switching ──
+
+function switchPage(page) {
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.toggle("active", t.dataset.page === page));
+  localStorage.setItem("gsm-dash-page", page);
+
+  const active = document.querySelector(".page.active");
+  const next = document.getElementById(`page-${page}`);
+  if (!active || active === next || !pageInitialized) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    next.classList.add("active");
+    return;
+  }
+
+  gsap.to(active, {
+    opacity: 0, y: -10, duration: 0.18, ease: "power1.in",
+    onComplete() {
+      active.classList.remove("active");
+      gsap.set(active, { clearProps: "opacity,y" });
+      next.classList.add("active");
+      gsap.fromTo(next,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out", clearProps: "opacity,y" }
+      );
+    }
+  });
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  document.getElementById("orders-active").style.display = tab === "active" ? "" : "none";
+  document.getElementById("orders-history").style.display = tab === "history" ? "" : "none";
+}
+
+// ── Stats ──
+
+function tweenStat(id, toVal, prefix = "") {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof gsap === "undefined") {
+    el.innerHTML = prefix ? `${prefix}${toVal.toFixed(2)}` : String(Math.round(toVal));
+    return;
+  }
+  const from = parseFloat(el.textContent.replace(/[^0-9.]/g, "")) || 0;
+  const obj = { n: from };
+  gsap.to(obj, {
+    n: toVal, duration: 1, ease: "power2.out",
+    onUpdate() {
+      el.innerHTML = prefix
+        ? `${prefix}${obj.n.toFixed(2)}`
+        : String(Math.round(obj.n));
+    }
+  });
+}
+
+function updateStats(stats) {
+  tweenStat("stat-today",     stats.today_count);
+  tweenStat("stat-in-lucru",  stats.in_lucru_count);
+  tweenStat("stat-completed", stats.completed_today);
+  tweenStat("stat-revenue",   stats.revenue_today, "RON ");
+}
+
+function updateDailySummary(stats) {
+  document.getElementById("ds-count").textContent = stats.today_count;
+  document.getElementById("ds-completed").textContent = stats.completed_today;
+  document.getElementById("ds-revenue").innerHTML = `RON ${stats.revenue_today}`;
+  document.getElementById("ds-avg").innerHTML = `RON ${stats.avg_order_today}`;
+  document.getElementById("ds-slot").textContent = stats.busiest_slot || "—";
+}
+
+// ── Orders rendering ──
+
+function statusLabel(status) {
+  return status === "in_lucru" ? "In lucru" : "Finalizata";
+}
+
+function formatDate(iso) {
+  if (!iso) return "\u2014";
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
+}
+
+function formatAppointmentDate(dateStr) {
+  if (!dateStr) return "\u2014";
+  const parts = dateStr.split("-");
+  if (parts.length === 3 && parts[0].length === 4) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  return dateStr;
+}
+
+function formatTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+}
+
+function esc(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderOrders(orders) {
+  // Preserve any open notes inputs across re-renders
+  const openNotes = {};
+  document.querySelectorAll("[id^='notes-row-']").forEach(row => {
+    const orderId = row.id.replace("notes-row-", "");
+    const ta = document.getElementById(`notes-input-${orderId}`);
+    if (ta) openNotes[orderId] = ta.value;
+  });
+
+  const active = orders.filter(o => o.status === "in_lucru");
+  const history = orders.filter(o => o.status === "completed");
+
+  document.getElementById("orders-active").innerHTML = active.length === 0
+    ? '<div class="empty-state">Nicio comanda in lucru</div>'
+    : active.map(orderCard).join("");
+
+  document.getElementById("orders-history").innerHTML = history.length === 0
+    ? '<div class="empty-state">Nicio comanda finalizata</div>'
+    : history.map(orderCard).join("");
+
+  // Restore open notes inputs
+  Object.entries(openNotes).forEach(([orderId, value]) => {
+    const card = document.getElementById(`card-${orderId}`);
+    if (!card) return;
+    const row = document.createElement("div");
+    row.className = "notes-input-row open";
+    row.id = `notes-row-${orderId}`;
+    row.innerHTML = `
+      <textarea class="notes-input" id="notes-input-${orderId}" placeholder="Adauga o nota...">${esc(value)}</textarea>
+      <button class="notes-save" onclick="saveNotes('${orderId}')">Salveaza nota</button>`;
+    card.querySelector(".order-actions").before(row);
+  });
+}
+
+function buildTimeline(o) {
+  const steps = [
+    { label: "Primit", time: o.created_at, done: true },
+    { label: "In lucru", time: o.created_at, done: true, active: o.status === "in_lucru" },
+    { label: "Finalizat", time: o.completed_at, done: o.status === "completed" },
+  ];
+
+  let html = '<div class="timeline">';
+  steps.forEach((s, i) => {
+    const cls = s.done ? (s.active ? "active" : "done") : "";
+    const lblCls = s.done ? (s.active ? "active" : "done") : "";
+    html += `<div class="tl-step">
+      <div class="tl-dot ${cls}"></div>
+      <div class="tl-label ${lblCls}">${s.label}</div>
+      <div class="tl-time">${s.done && s.time ? formatTime(s.time) : ""}</div>
+    </div>`;
+    if (i < steps.length - 1) {
+      html += `<div class="tl-line ${s.done && steps[i+1].done ? "done" : ""}"></div>`;
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function orderCard(o) {
+  const phone = o.customer_phone || "";
+  const name  = o.customer_name  || "";
+  const model = o.model          || "";
+  const brand = o.brand          || "";
+  const desc  = o.description    || "";
+
+  const svcLines = o.services.map(s => {
+    const svcName = s.name || s;
+    const price = s.price != null ? (s.price === 0 ? "GRATUIT" : `RON ${s.price}`) : "";
+    return `<div class="order-svc-item"><span>${esc(svcName)}</span><span>${price}</span></div>`;
+  }).join("");
+
+  const devicePart = (brand === "iphone" || brand === "samsung") && model ? `${model}, ` : "";
+  const waMsg = encodeURIComponent(`Salut! Dispozitivul ${devicePart}cu nr comanda ${o.id} este gata. Va asteptam!`);
+  const waBtn = phone
+    ? `<button class="btn-whatsapp" onclick="window.open('https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${waMsg}','_blank')">WhatsApp</button>`
+    : "";
+
+  let actions = "";
+  if (o.status === "in_lucru") {
+    actions = `
+      <div class="order-actions">
+        <div class="order-actions-row">
+          <button class="btn-complete" onclick="completeOrder('${o.id}')">Finalizeaza</button>
+          ${waBtn}
+          <button class="btn-delete" onclick="deleteOrder('${o.id}')">Sterge</button>
+        </div>
+        <div class="order-actions-row">
+          <button class="btn-notes" onclick="toggleNotes('${o.id}')">Note</button>
+          <button class="btn-print" onclick="printOrder('${o.id}')">Printeaza</button>
+        </div>
+      </div>`;
+  } else {
+    actions = `
+      <div class="order-actions">
+        <div class="order-actions-row">
+          <button class="btn-revert" onclick="revertOrder('${o.id}')">Reactiveza</button>
+          ${waBtn}
+          <button class="btn-delete" onclick="deleteOrder('${o.id}')">Sterge</button>
+        </div>
+        <div class="order-actions-row">
+          <button class="btn-print" onclick="printOrder('${o.id}')">Printeaza</button>
+        </div>
+      </div>`;
+  }
+
+  const notesDisplay = o.notes ? `<div class="order-notes" id="notes-display-${o.id}">${esc(o.notes)}</div>` : `<div id="notes-display-${o.id}"></div>`;
+  const notesInput = "";
+
+  const deviceLine = model ? `<div class="order-line"><span class="lbl">Dispozitiv</span><span class="val">${esc(model)}</span></div>` : "";
+  const nameLine   = name  ? `<div class="order-line"><span class="lbl">Client</span><span class="val">${esc(name)}</span></div>` : "";
+  const phoneLine  = phone ? `<div class="order-line"><span class="lbl">Telefon</span><span class="val">${esc(phone)}</span></div>` : "";
+  const descLine   = desc  ? `<div class="order-line"><span class="lbl">Problema</span><span class="val" style="color:var(--text2);font-weight:400">${esc(desc)}</span></div>` : "";
+
+  return `
+    <div class="order-card" id="card-${o.id}">
+      <div class="order-top">
+        <span class="order-id">${o.id}</span>
+        <span class="badge badge-${o.status}">${statusLabel(o.status)}</span>
+        <span class="order-amount">RON ${o.amount}</span>
+      </div>
+      ${buildTimeline(o)}
+      <div class="order-lines">
+        ${deviceLine}
+        ${nameLine}
+        ${phoneLine}
+        <div class="order-line"><span class="lbl">Data</span><span class="val">${formatAppointmentDate(o.date)}</span></div>
+        <div class="order-line"><span class="lbl">Ora</span><span class="val">${esc(o.time_slot || "—")}</span></div>
+        ${descLine}
+      </div>
+      <div class="order-services">${svcLines}</div>
+      <div class="order-total"><span>Total</span><span class="val">RON ${o.amount}</span></div>
+      ${notesDisplay}
+      ${actions}
+      ${notesInput}
+    </div>`;
+}
+
+// ── Actions ──
+
+async function completeOrder(orderId) {
+  try {
+    await apiFetch(`${API}/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "completed" }),
+    });
+  } catch (err) { console.error("Complete error:", err); }
+}
+
+function toggleNotes(orderId) {
+  const existing = document.getElementById(`notes-row-${orderId}`);
+  if (existing) { existing.remove(); return; }
+
+  const card = document.getElementById(`card-${orderId}`);
+  if (!card) return;
+  const currentNotes = card.querySelector(`#notes-display-${orderId}`)?.textContent || "";
+
+  const row = document.createElement("div");
+  row.className = "notes-input-row open";
+  row.id = `notes-row-${orderId}`;
+  row.innerHTML = `
+    <textarea class="notes-input" id="notes-input-${orderId}" placeholder="Adauga o nota...">${esc(currentNotes)}</textarea>
+    <button class="notes-save" onclick="saveNotes('${orderId}')">Salveaza nota</button>`;
+
+  card.querySelector(".order-actions").before(row);
+  row.querySelector("textarea").focus();
+}
+
+async function saveNotes(orderId) {
+  const input = document.getElementById(`notes-input-${orderId}`);
+  const btn = input ? input.parentElement.querySelector(".notes-save") : null;
+  if (!input) return;
+  try {
+    const res = await apiFetch(`${API}/api/orders/${orderId}/notes`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: input.value }),
+    });
+    if (res.ok && btn) {
+      // Update the notes display div directly (don't wait for broadcast)
+      const notesDiv = document.getElementById(`notes-display-${orderId}`);
+      if (notesDiv) {
+        notesDiv.textContent = input.value;
+        notesDiv.style.display = input.value.trim() ? "" : "none";
+      }
+      btn.textContent = "Salvat!";
+      btn.classList.add("saved");
+      setTimeout(() => { btn.textContent = "Salveaza nota"; btn.classList.remove("saved"); }, 2000);
+    }
+  } catch (err) { console.error("Notes error:", err); }
+}
+
+function printOrder(orderId) {
+  const card = document.getElementById(`card-${orderId}`);
+  if (!card) return;
+  const area = document.getElementById("print-area");
+  area.innerHTML = `
+    <div style="padding:20px;font-family:'Montserrat',sans-serif">
+      <h2 style="margin-bottom:16px;font-size:1.1rem">Mobile Concept GSM — Bon Comanda</h2>
+      ${card.innerHTML}
+    </div>`;
+  window.print();
+}
+
+// ── Analytics ──
+
+function updateAnalytics(a) {
+  if (!a) return;
+
+  const cats = ["Reparatii", "Inlocuiri & Daune", "Software & Diagnostic"];
+  document.getElementById("astat-rep").textContent = a.category_count["Reparatii"] || 0;
+  document.getElementById("astat-inl").textContent = a.category_count["Inlocuiri & Daune"] || 0;
+  document.getElementById("astat-swd").textContent = a.category_count["Software & Diagnostic"] || 0;
+  const totalRev = cats.reduce((s, c) => s + (a.category_revenue[c] || 0), 0);
+  document.getElementById("astat-rev").innerHTML = `RON ${totalRev}`;
+
+  const catLabels = cats;
+  const catColors = cats.map(c => CAT_COLORS[c]);
+
+  const countData = cats.map(c => a.category_count[c] || 0);
+  if (chartCatCount) {
+    chartCatCount.data.datasets[0].data = countData;
+    chartCatCount.update();
+  } else {
+    chartCatCount = new Chart(document.getElementById("chart-cat-count"), {
+      type: "bar",
+      data: {
+        labels: catLabels,
+        datasets: [{ data: countData, backgroundColor: catColors, borderRadius: 6, barPercentage: 0.6 }],
+      },
+      options: chartOpts("Numar comenzi", ""),
+    });
+  }
+
+  const revData = cats.map(c => a.category_revenue[c] || 0);
+  if (chartCatRevenue) {
+    chartCatRevenue.data.datasets[0].data = revData;
+    chartCatRevenue.update();
+  } else {
+    chartCatRevenue = new Chart(document.getElementById("chart-cat-revenue"), {
+      type: "doughnut",
+      data: {
+        labels: catLabels,
+        datasets: [{ data: revData, backgroundColor: catColors, borderWidth: 0 }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: {
+          legend: { position: "bottom", labels: { font: { family: "Montserrat", size: 11 }, color: "#c9aef5", padding: 16 } },
+          tooltip: { callbacks: { label: ctx => ` RON ${ctx.parsed}` } },
+        },
+      },
+    });
+  }
+
+  // ── Slot count chart ──
+  const slotData = SLOTS.map(s => (a.slot_count && a.slot_count[s]) || 0);
+  const slotMax = Math.max(...slotData, 1);
+  const slotColors = slotData.map(v => {
+    const intensity = 0.3 + 0.7 * (v / slotMax);
+    return `rgba(194,100,255,${intensity})`;
+  });
+
+  if (chartSlots) {
+    chartSlots.data.datasets[0].data = slotData;
+    chartSlots.data.datasets[0].backgroundColor = slotColors;
+    chartSlots.update();
+  } else {
+    chartSlots = new Chart(document.getElementById("chart-slots"), {
+      type: "bar",
+      data: {
+        labels: SLOTS,
+        datasets: [{
+          data: slotData,
+          backgroundColor: slotColors,
+          hoverBackgroundColor: "#D480FF",
+          borderRadius: 6, barPercentage: 0.55,
+        }],
+      },
+      options: chartOpts("Comenzi", ""),
+    });
+  }
+
+  // ── Weekday revenue chart ──
+  const wdLabels = ["Luni","Marti","Miercuri","Joi","Vineri","Sambata","Duminica"];
+  const wdData = a.weekday_revenue || [0,0,0,0,0,0,0];
+  const wdColors = wdData.map((v) => {
+    const max = Math.max(...wdData, 1);
+    const intensity = 0.3 + 0.7 * (v / max);
+    return `rgba(194,100,255,${intensity})`;
+  });
+
+  if (chartWeekday) {
+    chartWeekday.data.datasets[0].data = wdData;
+    chartWeekday.data.datasets[0].backgroundColor = wdColors;
+    chartWeekday.update();
+  } else {
+    chartWeekday = new Chart(document.getElementById("chart-weekday"), {
+      type: "bar",
+      data: {
+        labels: wdLabels,
+        datasets: [{
+          data: wdData,
+          backgroundColor: wdColors,
+          hoverBackgroundColor: "#D480FF",
+          borderRadius: 6, barPercentage: 0.5,
+        }],
+      },
+      options: chartOpts("RON"),
+    });
+  }
+
+  // ── Monthly revenue chart ──
+  const months = Object.keys(a.monthly_revenue || {});
+  const monthData = months.map(m => a.monthly_revenue[m]);
+  const monthLabels = months.map(m => {
+    const [y, mo] = m.split("-");
+    const names = ["Ian","Feb","Mar","Apr","Mai","Iun","Iul","Aug","Sep","Oct","Nov","Dec"];
+    return `${names[parseInt(mo)-1]} ${y}`;
+  });
+
+  if (chartMonthly) {
+    chartMonthly.data.labels = monthLabels;
+    chartMonthly.data.datasets[0].data = monthData;
+    chartMonthly.update();
+  } else {
+    chartMonthly = new Chart(document.getElementById("chart-monthly"), {
+      type: "bar",
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          data: monthData,
+          backgroundColor: "rgba(194,100,255,.7)",
+          hoverBackgroundColor: "#D480FF",
+          borderRadius: 6, barPercentage: 0.5,
+        }],
+      },
+      options: chartOpts("RON"),
+    });
+  }
+}
+
+function chartOpts(yLabel, prefix) {
+  const pfx = prefix !== undefined ? prefix : "RON ";
+  return {
+    responsive: true, maintainAspectRatio: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#141220", borderColor: "#2d2b40", borderWidth: 1,
+        titleFont: { family: "Montserrat", size: 12 }, titleColor: "#F4EDFF",
+        bodyFont: { family: "Montserrat", size: 12 }, bodyColor: "#9994b8", padding: 10, cornerRadius: 8,
+        callbacks: { label: ctx => ` ${pfx}${ctx.parsed.y}` },
+      },
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { family: "Montserrat", size: 11, weight: 500 }, color: "#8a76c0" } },
+      y: { beginAtZero: true, grid: { color: "rgba(255,255,255,.05)", drawBorder: false },
+        ticks: { font: { family: "Montserrat", size: 11 }, color: "#8a76c0", padding: 8 },
+        title: { display: true, text: yLabel, font: { family: "Montserrat", size: 11, weight: 600 }, color: "#c9aef5" },
+        border: { display: false },
+      },
+    },
+  };
+}
+
+// ── Toast ──
+
+function showToast(title, sub) {
+  const el = document.getElementById("toast");
+  document.getElementById("toast-title").textContent = title;
+  document.getElementById("toast-sub").textContent = sub;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 4000);
+}
+
+// ── Connection status ──
+
+socket.on("connect", () => {
+  document.getElementById("conn-dot").className = "conn-dot online";
+});
+
+socket.on("disconnect", () => {
+  document.getElementById("conn-dot").className = "conn-dot offline";
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mobile Concept GSM</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23151518'/><text x='50' y='68' font-size='50' font-family='Arial' font-weight='bold' fill='%238176FF' text-anchor='middle'>MC</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
+:root{
+  --bg:#0d0c12;
+  --surface:#1c1b1b;
+  --surface2:#242330;
+  --border:#2d2b40;
+  --text:#F4EDFF;
+  --text2:#D4D4D4;
+  --text3:#6a6880;
+  --accent:#8176FF;
+  --accent-light:rgba(129,118,255,.12);
+  --accent-hover:#9a91ff;
+  --accent2:#61CE70;
+  --btn-bg:#534D9F;
+  --btn-hover:#6B5EFF;
+  --header-bg:#151518;
+  --radius:12px;
+  --shadow:0 2px 12px rgba(0,0,0,.5);
+}
+
+/* ── Body ── */
+body{background:transparent;color:#fff;font-family:'Montserrat',sans-serif}
+
+/* ── Booking overlay backdrop ── */
+#booking-overlay{
+  display:flex;
+  position:fixed;top:0;right:0;bottom:0;left:0;
+  background:rgba(0,0,0,.88);
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  font-family:'Work Sans',sans-serif;
+  color:var(--text);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .3s ease, visibility .3s;
+}
+#booking-overlay.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:all;
+}
+
+/* ── Modal card ── */
+#booking-modal{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:20px;
+  max-width:540px;
+  width:100%;
+  max-height:calc(100vh - 40px);
+  max-height:calc(100svh - 40px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.85);
+  opacity:0;
+  transform:translateY(32px) scale(0.97);
+  transition:opacity .4s ease, transform .45s cubic-bezier(0.34,1.4,0.64,1);
+}
+#booking-overlay.open #booking-modal{
+  opacity:1;
+  transform:translateY(0) scale(1);
+}
+@media(min-width:900px){
+  #booking-modal{max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px)}
+  #booking-modal.modal-wide{max-width:820px}
+  .container.wide-container{max-width:100%}
+}
+
+/* ── Modal header (steps + title + back + close) ── */
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 16px 20px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.modal-header-center{
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-title{
+  font-family:'Montserrat',sans-serif;font-size:.88rem;font-weight:700;
+  color:var(--text);letter-spacing:.2px;text-align:center;
+  padding:30px 16px 2px;flex-shrink:0;
+}
+
+/* ── Modal scrollable body ── */
+#booking-scroll{
+  overflow-y:auto;
+  flex:1;
+  scrollbar-width:none;-ms-overflow-style:none;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+#booking-scroll::-webkit-scrollbar{display:none}
+
+/* ── Close button ── */
+#close-booking{
+  position:absolute;right:8px;
+  background:none;border:none;
+  color:var(--text2);font-size:1.1rem;
+  cursor:pointer;border-radius:50%;line-height:1;
+  transition:color .15s,background .15s;
+  min-width:44px;min-height:44px;
+  display:flex;align-items:center;justify-content:center;
+}
+#close-booking:hover{color:var(--text);background:var(--surface2)}
+#close-booking:active{color:var(--text);background:var(--surface2)}
+
+
+/* ────────────────────────────────────────────
+   POPUP STYLES (from serviceCheckout)
+──────────────────────────────────────────── */
+.container{max-width:520px;width:100%;padding:24px 20px 28px;margin:0 auto}
+
+.steps{
+  display:flex;justify-content:center;align-items:center;gap:14px;
+  pointer-events:none;
+}
+.steps .dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--border);position:relative;
+  transition:background .35s,transform .35s,opacity .35s,box-shadow .35s;
+}
+.steps .dot.done{background:var(--accent);opacity:.35}
+.steps .dot.active{background:var(--accent);transform:scale(1.35);box-shadow:0 0 0 4px rgba(129,118,255,.22)}
+
+.step{display:none}
+.step.active{display:block}
+
+.step-title{font-family:'Montserrat',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:16px;color:var(--text);text-align:center;letter-spacing:.2px}
+
+.services-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.svc-card{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:20px 12px 16px;cursor:pointer;transition:border-color .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:8px;position:relative;
+}
+.svc-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.svc-card .name{font-family:'Montserrat',sans-serif;font-weight:600;font-size:.8rem;line-height:1.3;color:var(--text)}
+.svc-card .price{font-family:'Montserrat',sans-serif;color:var(--accent);font-weight:700;font-size:.88rem}
+
+.brand-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.brand-card.wide{grid-column:1/-1}
+.brand-card{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:28px 16px;cursor:pointer;transition:border-color .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:10px;
+}
+.brand-card:hover,.brand-card:active{border-color:var(--accent);background:var(--accent-light)}
+.brand-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.brand-card.placeholder{opacity:.38;cursor:default}
+.brand-card.placeholder:hover{border-color:var(--border);box-shadow:var(--shadow)}
+.brand-card .brand-icon{width:58px;height:58px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border-radius:14px;border:none;overflow:hidden;flex-shrink:0}
+.brand-logo{width:54px;height:54px;object-fit:contain;filter:brightness(0) invert(1);opacity:.85}
+.brand-card .brand-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1rem}
+.brand-card .brand-count{color:var(--text2);font-size:.72rem;margin-top:1px}
+
+.model-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.model-card{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:16px 12px;cursor:pointer;transition:border-color .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
+  touch-action:manipulation;
+}
+.model-thumb{-webkit-user-drag:none;user-drag:none;pointer-events:none}
+.model-card:hover,.model-card:active{border-color:var(--accent);background:var(--accent-light)}
+.model-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.model-card .model-name{font-family:'Montserrat',sans-serif;font-weight:600;font-size:.78rem;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.model-thumb{width:64px;height:88px;object-fit:contain;border-radius:0;background:none;flex-shrink:0;padding:4px;-webkit-user-drag:none;user-drag:none;pointer-events:none}
+
+#back-btn{
+  position:absolute;left:8px;
+  background:none;border:none;color:var(--text2);font-size:1.25rem;
+  cursor:pointer;border-radius:50%;line-height:1;
+  transition:color .15s,background .15s;
+  display:none;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;
+}
+#back-btn:hover{color:var(--accent);background:var(--surface2)}
+#back-btn:active{color:var(--accent);background:var(--surface2)}
+
+
+
+.date-section{margin-bottom:22px}
+.date-section label{display:block;font-weight:600;margin-bottom:8px;font-size:.88rem;color:var(--text2)}
+.flatpickr-input{
+  width:100%;padding:13px 14px;border-radius:var(--radius);border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:.92rem;
+  box-shadow:var(--shadow);outline:none;transition:border .15s;
+}
+.flatpickr-input:focus{border-color:var(--accent)}
+.desc-hint{font-size:.75rem;color:var(--text3);margin-top:8px;line-height:1.5;text-align:center}
+.time-slots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.time-slot{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:16px 8px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);
+}
+.time-slot:hover{border-color:var(--text3)}
+.time-slot:active{border-color:var(--accent);background:var(--accent-light)}
+.time-slot.selected{border-color:var(--accent);background:var(--accent-light)}
+.time-slot .label{font-weight:600;font-size:.85rem}
+.time-slot .hours{color:var(--text2);font-size:.72rem;margin-top:3px}
+
+.summary-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;
+}
+.summary-card h3{font-family:'Montserrat',sans-serif;margin-bottom:10px;font-size:.85rem;display:flex;align-items:center;gap:6px}
+.summary-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+.summary-line:last-child{border:none}
+.summary-line .lbl{color:var(--text2)}
+.summary-line .val{font-weight:600}
+.summary-services{margin-bottom:12px}
+.summary-svc-item{display:flex;justify-content:space-between;padding:6px 0;font-size:.86rem}
+.summary-total{border-top:2px solid var(--accent);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem}
+.summary-total .val{color:var(--accent)}
+.edit-link{color:var(--accent);font-size:.78rem;cursor:pointer;text-decoration:none;font-weight:500}
+.edit-link:hover{text-decoration:underline}
+
+.receipt-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
+}
+.receipt-section{padding:8px 14px}
+.receipt-section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.receipt-lbl{
+  font-family:'Montserrat',sans-serif;font-size:.65rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;color:var(--text3);
+}
+.receipt-divider{height:1px;background:var(--border)}
+.receipt-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:4px 0;font-size:.83rem;
+}
+.receipt-row .lbl{color:var(--text2)}
+.receipt-row .val{font-weight:600;text-align:right;max-width:58%}
+.receipt-total{
+  padding:10px 14px;background:var(--surface2);
+  border-top:2px solid var(--accent);
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Montserrat',sans-serif;font-weight:700;font-size:.95rem;
+}
+.receipt-card .summary-svc-item{padding:4px 0;font-size:.84rem}
+
+#step-2 .btn, #step-3 .btn{padding:14px;margin-top:14px}
+#btn-next-0{margin-top:24px}
+
+.btn{
+  width:100%;padding:12px;border:none;border-radius:9999px;
+  font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .15s;margin-top:10px;letter-spacing:.3px;
+}
+.btn-primary{background:var(--btn-bg);color:#fff}
+.btn-primary:hover{background:var(--btn-hover)}
+.btn-primary:disabled{background:#2a2938;color:#4a4860;cursor:not-allowed;transform:none}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-hover)}
+.btn-accent:disabled{background:#2a2938;color:#4a4860;cursor:not-allowed}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-back{background:none;color:var(--text2);border:none;font-size:.82rem;margin-top:10px;cursor:pointer;padding:8px 0}
+.btn-back:hover{color:var(--accent)}
+
+#revolut-pay{margin-top:8px;min-height:0;max-width:200px;margin-left:auto;margin-right:auto}
+.payment-placeholder{
+  background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius);
+  padding:28px;text-align:center;color:var(--text2);font-size:.82rem;margin-top:16px;
+}
+
+.confirm-check{
+  width:48px;height:48px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 12px;
+}
+.confirm-check svg{width:24px;height:24px;stroke:#fff;stroke-width:3;fill:none}
+.confirm-title{font-family:'Montserrat',sans-serif;text-align:center;font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.confirm-sub{text-align:center;color:var(--text2);font-size:.82rem;margin-bottom:12px;line-height:1.5}
+.order-id{text-align:center;color:var(--text3);font-size:.75rem;margin-bottom:12px;font-family:'Courier New',monospace;letter-spacing:.5px}
+
+@media(min-width:600px){
+  .model-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:480px){
+  .choice-card{padding:18px 14px 16px;gap:12px}
+  .choice-icon-wrap{width:44px;height:44px;font-size:1.3rem}
+}
+@media(max-width:380px){
+  .services-grid{grid-template-columns:1fr}
+  .time-slots{grid-template-columns:1fr 1fr !important}
+  .pay-methods{flex-direction:column}
+  .pay-methods .pay-btn{width:100%}
+  .container{padding:20px 12px 32px}
+  .svc-card{padding:14px 12px}
+  .choice-card{padding:14px 12px 14px;gap:10px}
+  .choice-icon-wrap{width:40px;height:40px;font-size:1.15rem}
+  .choice-title{font-size:.95rem}
+  .choice-sub{font-size:.74rem}
+}
+
+.choice-grid{display:flex;flex-direction:column;gap:16px;margin-top:14px}
+.choice-card{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:26px 22px 24px;cursor:pointer;
+  transition:border-color .18s,background .18s;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:row;align-items:flex-start;gap:18px;
+}
+
+.choice-card:active{transition-duration:.08s}
+.choice-card-servicii:hover,.choice-card-servicii:active,.choice-card-servicii.selected{
+  border-color:var(--accent);background:var(--accent-light);
+}
+.choice-card-diagnoza:hover,.choice-card-diagnoza:active,.choice-card-diagnoza.selected{
+  border-color:#22c55e;background:rgba(34,197,94,.07);
+}
+.choice-icon-wrap{
+  width:52px;height:52px;border-radius:14px;
+  background:rgba(129,118,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.55rem;flex-shrink:0;
+}
+.choice-icon-wrap.green{background:rgba(34,197,94,.1)}
+.choice-body{flex:1}
+.choice-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;line-height:1.3}
+.choice-sub{font-size:.79rem;color:var(--text2);margin-top:5px;line-height:1.45}
+.choice-range{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent);margin-top:6px}
+.choice-price-zero{font-family:'Montserrat',sans-serif;font-weight:800;font-size:.85rem;color:#22c55e;margin-top:6px}
+.choice-tags{display:flex;gap:5px;flex-wrap:nowrap;margin-top:12px;overflow:hidden}
+.choice-tag{font-size:.7rem;border-radius:999px;padding:3px 8px;font-family:'Montserrat',sans-serif;white-space:nowrap}
+.choice-card-servicii .choice-tag{color:var(--accent);background:var(--accent-light)}
+.choice-card-diagnoza .choice-tag{color:#22c55e;background:rgba(34,197,94,.1)}
+.choice-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:8px;flex-shrink:0;padding-top:2px}
+.choice-arrow{color:var(--text3);font-size:1.1rem;line-height:1}
+.choice-gratis{
+  font-family:'Montserrat',sans-serif;font-weight:800;font-size:.78rem;
+  color:#22c55e;letter-spacing:.5px;
+  background:rgba(34,197,94,.12);padding:3px 10px;border-radius:999px;
+}
+
+/* ── Tap animations ── */
+@keyframes brand-tap {
+  0%   { transform:scale(1); }
+  28%  { transform:scale(.95);  border-color:var(--accent); box-shadow:0 0 0 5px rgba(129,118,255,.22); background:var(--accent-light); }
+  62%  { transform:scale(1.02); border-color:var(--accent); box-shadow:0 0 0 3px rgba(129,118,255,.14); background:var(--accent-light); }
+  100% { transform:scale(1);    border-color:var(--border); box-shadow:none; background:var(--surface); }
+}
+@keyframes diagnoza-tap {
+  0%   { transform:scale(1); }
+  28%  { transform:scale(.95);  border-color:#22c55e; box-shadow:0 0 0 5px rgba(34,197,94,.22); background:rgba(34,197,94,.07); }
+  62%  { transform:scale(1.02); border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.14); background:rgba(34,197,94,.07); }
+  100% { transform:scale(1);    border-color:var(--border); box-shadow:none; background:var(--surface); }
+}
+.brand-card.tapping,.model-card.tapping,.choice-card-servicii.tapping {
+  animation:brand-tap 340ms cubic-bezier(.25,.8,.25,1) forwards;
+  pointer-events:none;transition:none;
+}
+.choice-card-diagnoza.tapping {
+  animation:diagnoza-tap 340ms cubic-bezier(.25,.8,.25,1) forwards;
+  pointer-events:none;transition:none;
+}
+
+
+/* ── Mobile / Touch fixes ── */
+#booking-scroll.scroll-locked{overflow-y:hidden !important}
+
+/* Touch tap highlight — JS-driven via touchstart/touchend, reliable on iOS */
+.brand-card.touch-active:not(.placeholder){border-color:var(--accent);background:var(--accent-light)}
+.model-card.touch-active{border-color:var(--accent);background:var(--accent-light)}
+
+.time-slot.touch-active{border-color:var(--accent);background:var(--accent-light)}
+.choice-card-servicii.touch-active{border-color:var(--accent);background:var(--accent-light);box-shadow:0 6px 20px rgba(129,118,255,.18)}
+.choice-card-diagnoza.touch-active{border-color:#22c55e;background:rgba(34,197,94,.07);box-shadow:0 6px 20px rgba(34,197,94,.15)}
+
+/* On touch devices: disable hover (fires on scroll), keep :active for tap feedback */
+@media(hover:none){
+
+  .brand-card:hover{border-color:var(--border);background:var(--surface)}
+  .brand-card.placeholder:hover{border-color:var(--border)}
+  .model-card:hover{border-color:var(--border);background:var(--surface)}
+
+  .choice-card:hover{box-shadow:var(--shadow)}
+  .choice-card-servicii:hover{border-color:var(--border);background:var(--surface);box-shadow:var(--shadow)}
+  .choice-card-diagnoza:hover{border-color:var(--border);background:var(--surface);box-shadow:var(--shadow)}
+  .time-slot:hover{border-color:var(--border);transform:none}
+  .btn-primary:hover{background:var(--btn-bg)}
+  .btn-accent:hover{background:var(--accent)}
+  .btn-secondary:hover{background:var(--surface)}
+  .btn-back:hover{color:var(--text2)}
+  #close-booking:hover{color:var(--text2);background:none}
+  #back-btn:hover{color:var(--text2);background:none}
+  .edit-link:hover{text-decoration:none}
+}
+
+/* Safe area padding for notch / home indicator (iPhone X+, Android) */
+@supports(padding:max(0px)){
+  #booking-overlay{
+    padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))
+  }
+}
+
+/* ── Flatpickr theme — match app palette ── */
+.flatpickr-calendar{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 8px 32px rgba(0,0,0,.7);
+  font-family:'Work Sans',sans-serif;
+  color:var(--text);
+}
+.flatpickr-calendar.arrowTop:before{border-bottom-color:var(--border)}
+.flatpickr-calendar.arrowTop:after{border-bottom-color:var(--surface)}
+.flatpickr-calendar.arrowBottom:before{border-top-color:var(--border)}
+.flatpickr-calendar.arrowBottom:after{border-top-color:var(--surface)}
+.flatpickr-months{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0}
+.flatpickr-months .flatpickr-month{background:var(--surface);color:var(--text);fill:var(--text);height:44px}
+.flatpickr-months .flatpickr-prev-month,.flatpickr-months .flatpickr-next-month{fill:var(--text2);top:10px}
+.flatpickr-months .flatpickr-prev-month:hover svg,.flatpickr-months .flatpickr-next-month:hover svg{fill:var(--accent)}
+.flatpickr-current-month{color:var(--text)}
+.flatpickr-current-month .flatpickr-monthDropdown-months{background:var(--surface);color:var(--text);border:none;font-weight:600}
+.flatpickr-current-month input.cur-year{color:var(--text);font-weight:600}
+.flatpickr-weekdays{background:var(--surface2)}
+span.flatpickr-weekday{background:var(--surface2);color:var(--text3);font-size:.72rem;font-weight:700;letter-spacing:.5px}
+.flatpickr-days{border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.dayContainer{padding:4px}
+.flatpickr-day{
+  color:var(--text);
+  border-radius:8px;
+  border:1px solid transparent;
+}
+.flatpickr-day:hover,.flatpickr-day:focus{
+  background:var(--accent-light);
+  border-color:transparent;
+  color:var(--text);
+}
+.flatpickr-day.today{
+  border-color:var(--accent);
+  color:var(--text);
+  font-weight:600;
+}
+.flatpickr-day.today:hover{
+  background:var(--accent-light);
+  border-color:var(--accent);
+  color:var(--text);
+}
+.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.selected:focus{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+  font-weight:700;
+}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{
+  color:var(--text3);
+  opacity:.35;
+}
+.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{
+  color:var(--text3);
+  opacity:.4;
+}
+.flatpickr-innerContainer{border-bottom:1px solid var(--border)}
+.flatpickr-rContainer{width:100%}
+.numInputWrapper:hover{background:var(--surface2)}
+
+</style>
+</head>
+<body>
+
+<!-- ── BOOKING OVERLAY ── -->
+<div id="booking-overlay">
+  <div id="booking-modal">
+
+  <div class="modal-header">
+    <button id="back-btn" onclick="goBack()">&#8592;</button>
+    <div class="modal-header-center">
+      <div class="steps">
+        <div class="dot active" data-step="0"></div>
+        <div class="dot" data-step="1"></div>
+        <div class="dot" data-step="2"></div>
+        <div class="dot" data-step="3"></div>
+        <div class="dot" data-step="4"></div>
+        <div class="dot" data-step="5"></div>
+      </div>
+    </div>
+    <button id="close-booking" onclick="closeBooking()" title="Inchide">&#x2715;</button>
+  </div>
+  <div id="modal-title" class="modal-title">Alege Marca Telefonului</div>
+
+  <div id="booking-scroll">
+  <div class="container" id="booking-container">
+
+    <div class="step active" id="step-0">
+      <div id="brand-view"></div>
+      <div id="series-view" style="display:none"></div>
+      <div id="model-view" style="display:none"></div>
+      <div id="choice-view" style="display:none"></div>
+      <div id="service-view" style="display:none">
+        <div class="services-grid" id="services-grid"></div>
+      </div>
+      <div id="description-view" style="display:none">
+        <div class="date-section">
+          <textarea id="problem-input" class="flatpickr-input" rows="5"
+            placeholder="Ex: Ecranul are o linie alba, telefonul nu porneste, nu se incarca..."
+            oninput="state.description=this.value"
+            style="resize:none;line-height:1.6;font-family:inherit"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-next-0" disabled style="display:none">Inainte</button>
+    </div>
+
+    <div class="step" id="step-1">
+      <div class="date-section">
+        <label>Alege o data</label>
+        <input type="text" id="date-picker" class="flatpickr-input" placeholder="Selecteaza data...">
+      </div>
+      <div class="date-section">
+        <label>Nume si prenume</label>
+        <input type="text" id="name-input" class="flatpickr-input" placeholder="Numele complet" oninput="state.name=this.value;checkStep1Ready()">
+      </div>
+      <div class="date-section">
+        <label>Numar de telefon</label>
+        <input type="tel" id="phone-input" class="flatpickr-input" placeholder="07xx xxx xxx" oninput="state.phone=this.value;checkStep1Ready()">
+      </div>
+      <div class="date-section">
+        <label>Alege intervalul orar</label>
+        <div class="time-slots" id="time-slots" style="grid-template-columns:repeat(4,1fr)">
+          <div class="time-slot" data-slot="10:00"><div class="label">10:00</div></div>
+          <div class="time-slot" data-slot="11:00"><div class="label">11:00</div></div>
+          <div class="time-slot" data-slot="12:00"><div class="label">12:00</div></div>
+          <div class="time-slot" data-slot="13:00"><div class="label">13:00</div></div>
+          <div class="time-slot" data-slot="14:00"><div class="label">14:00</div></div>
+          <div class="time-slot" data-slot="15:00"><div class="label">15:00</div></div>
+          <div class="time-slot" data-slot="16:00"><div class="label">16:00</div></div>
+          <div class="time-slot" data-slot="17:00"><div class="label">17:00</div></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-next-1" disabled>Inainte</button>
+    </div>
+
+    <div class="step" id="step-2">
+      <div class="receipt-card">
+        <div class="receipt-section">
+          <div class="receipt-section-hdr">
+            <span id="summary-model-name" style="font-weight:600;font-size:.9rem">—</span>
+            <span class="edit-link" onclick="goStep(1)">modifica</span>
+          </div>
+          <div class="receipt-row"><span class="lbl">Nume</span><span class="val" id="summary-name">—</span></div>
+          <div class="receipt-row"><span class="lbl">Telefon</span><span class="val" id="summary-phone">—</span></div>
+          <div class="receipt-row"><span class="lbl">Data</span><span class="val" id="summary-date">—</span></div>
+          <div class="receipt-row"><span class="lbl">Ora</span><span class="val" id="summary-time">—</span></div>
+        </div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-section">
+          <div class="receipt-section-hdr">
+            <span class="receipt-lbl" id="summary-section-label">Servicii</span>
+            <span class="edit-link" onclick="editServices()">modifica</span>
+          </div>
+          <div id="summary-services"></div>
+        </div>
+        <div class="receipt-total">
+          <span>Total</span>
+          <span id="summary-total">0 lei</span>
+        </div>
+      </div>
+      <div id="revolut-pay"></div>
+      <button class="btn btn-accent" id="btn-pay" style="margin-top:24px" onclick="initiatePayment('card')">Plateste cu cardul — <span id="pay-amount">0</span> lei</button>
+      <button class="btn btn-accent" id="btn-book-free" style="display:none" onclick="bookFreeAppointment()">Programeaza Diagnosticarea</button>
+    </div>
+
+    <div class="step" id="step-3">
+      <div class="confirm-check">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="confirm-title">Plata efectuata cu succes!</div>
+      <div class="confirm-sub">Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.</div>
+      <div class="order-id" id="order-id"></div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="resetAll()">Programeaza Alt Serviciu</button>
+    </div>
+
+  </div>
+  </div><!-- /booking-scroll -->
+  </div><!-- /booking-modal -->
+</div><!-- /booking-overlay -->
+
+
+
+<script src="https://merchant.revolut.com/embed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+const CONFIG = {
+  API_BASE: "",
+  CURRENCY: "RON",
+  SHOP_NAME: "Mobile Concept GSM"
+};
+
+
+// Web Worker for background payment status polling (runs even when tab is backgrounded)
+const PAYMENT_WORKER_URL = (function() {
+  try {
+    return URL.createObjectURL(new Blob([
+      'var t=null;self.onmessage=function(e){' +
+      'if(e.data.cmd==="start"){clearInterval(t);var u=e.data.url,n=0;' +
+      't=setInterval(function(){if(++n>300){clearInterval(t);return;}' +
+      'fetch(u).then(function(r){return r.json();})' +
+      '.then(function(d){if(d.status==="completed"){clearInterval(t);self.postMessage(d);}})' +
+      '.catch(function(){});},1000);}' +
+      'if(e.data.cmd==="stop"){clearInterval(t);}};'
+    ], { type: "application/javascript" }));
+  } catch(e) { return null; }
+})();
+
+
+
+async function loadPrices() {
+  try {
+    const resp = await fetch(`${CONFIG.API_BASE}/api/prices`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    BRANDS.forEach(b => {
+      if (!data[b.id]) return;
+      Object.entries(data[b.id]).forEach(([model, services]) => {
+        if (b.data[model]) b.data[model] = services;
+      });
+    });
+  } catch (e) {
+    console.warn('[Prices] Could not load from API, using built-in defaults');
+  }
+}
+
+/* ── Open / Close overlay ── */
+let _bodyScrollY = 0;
+function openBooking() {
+  _bodyScrollY = window.scrollY || window.pageYOffset;
+  document.body.style.overflow = "hidden";
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${_bodyScrollY}px`;
+  document.body.style.width = "100%";
+  document.body.style.webkitOverflowScrolling = "auto";
+  document.getElementById("booking-overlay").classList.add("open");
+  if (window.parent !== window) {
+    window.parent.postMessage({ action: "openBooking" }, "*");
+  }
+  initDatePicker(); initTimeSlots();
+}
+function closeBooking() {
+  document.getElementById("booking-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.width = "";
+  document.body.style.webkitOverflowScrolling = "";
+  window.scrollTo(0, _bodyScrollY);
+  resetAll();
+  // Signal parent WordPress page to hide the iframe overlay
+  if (window.parent !== window) {
+    window.parent.postMessage({ action: "closeBooking" }, "*");
+  }
+}
+
+/* ── Pricing data ── */
+const IPHONE_DATA = {
+  "iPhone 17 Pro Max": {"Display Aftermarket":1200,"Display ORIGINAL":2000,"Acumulator":750,"Sticla Spate":900,"Difuzor / Buzzer":300,"Modul Incarcare":500,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 17 Pro": {"Display Aftermarket":900,"Display ORIGINAL":1800,"Acumulator":750,"Sticla Spate":800,"Difuzor / Buzzer":300,"Modul Incarcare":500,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 17 Air": {"Display Aftermarket":900,"Display ORIGINAL":1700,"Acumulator":600,"Sticla Spate":700,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 17": {"Display Aftermarket":850,"Display ORIGINAL":1600,"Acumulator":550,"Sticla Spate":650,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 16 Pro Max": {"Display Aftermarket":1100,"Display ORIGINAL":1850,"Acumulator":700,"Sticla Spate":800,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 16 Pro": {"Display Aftermarket":800,"Display ORIGINAL":1700,"Acumulator":700,"Sticla Spate":750,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 16 Plus": {"Display Aftermarket":800,"Display ORIGINAL":2350,"Acumulator":500,"Sticla Spate":650,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 16": {"Display Aftermarket":800,"Display ORIGINAL":1480,"Acumulator":500,"Sticla Spate":600,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 15 Pro Max": {"Display Aftermarket":700,"Display ORIGINAL":1450,"Sticla LCD":900,"Acumulator":550,"Sticla Spate":700,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":570,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 15 Pro": {"Display Aftermarket":700,"Display ORIGINAL":1450,"Sticla LCD":700,"Acumulator":550,"Sticla Spate":650,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 15 Plus": {"Display Aftermarket":490,"Display ORIGINAL":1300,"Sticla LCD":700,"Acumulator":450,"Sticla Spate":600,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":500,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 15": {"Display Aftermarket":480,"Display ORIGINAL":1200,"Sticla LCD":550,"Acumulator":400,"Sticla Spate":600,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":300,"Curatare Apa (Oxid)":300,"Resoftare / Update":150},
+  "iPhone 14 Pro Max": {"Display Aftermarket":650,"Display ORIGINAL":1550,"Sticla LCD":600,"Acumulator":500,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":500,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 14 Pro": {"Display Aftermarket":600,"Display ORIGINAL":1000,"Sticla LCD":550,"Acumulator":450,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 14 Plus": {"Display Aftermarket":750,"Display ORIGINAL":1000,"Sticla LCD":550,"Acumulator":430,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 14": {"Display Aftermarket":550,"Display ORIGINAL":800,"Sticla LCD":550,"Acumulator":400,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 13 Pro Max": {"Display Aftermarket":530,"Display ORIGINAL":1100,"Sticla LCD":550,"Acumulator":450,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 13 Pro": {"Display Aftermarket":480,"Display ORIGINAL":900,"Sticla LCD":500,"Acumulator":400,"Sticla Spate":450,"Difuzor / Buzzer":300,"Modul Incarcare":450,"Microfon":450,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 13": {"Display Aftermarket":450,"Display ORIGINAL":600,"Sticla LCD":450,"Acumulator":450,"Sticla Spate":400,"Difuzor / Buzzer":300,"Modul Incarcare":400,"Microfon":400,"Montaj Placa de Baza":250,"Curatare Apa (Oxid)":250,"Resoftare / Update":150},
+  "iPhone 12 Pro Max": {"Display Aftermarket":470,"Display ORIGINAL":800,"Sticla LCD":500,"Acumulator":400,"Sticla Spate":400,"Difuzor / Buzzer":250,"Modul Incarcare":350,"Microfon":650,"Mufa Jack":650,"Camera Principala":750,"Geam Camera":300,"Flex Proxy":650,"Buton Power - Volum":300,"Montaj Placa de Baza":250,"Reconditionare Sticla Spate":490,"Carcasa Completa":940,"Curatare Apa (Oxid)":250,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 12 Pro": {"Display Aftermarket":380,"Display ORIGINAL":700,"Sticla LCD":500,"Acumulator":450,"Sticla Spate":400,"Difuzor / Buzzer":200,"Modul Incarcare":390,"Microfon":390,"Mufa Jack":390,"Camera Principala":700,"Geam Camera":300,"Flex Proxy":600,"Buton Power - Volum":250,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":450,"Carcasa Completa":850,"Curatare Apa (Oxid)":200,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 12": {"Display Aftermarket":380,"Display ORIGINAL":700,"Sticla LCD":500,"Acumulator":400,"Sticla Spate":400,"Difuzor / Buzzer":200,"Modul Incarcare":350,"Microfon":350,"Mufa Jack":350,"Camera Principala":650,"Geam Camera":300,"Flex Proxy":550,"Buton Power - Volum":250,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":400,"Carcasa Completa":650,"Curatare Apa (Oxid)":200,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 12 mini": {"Display Aftermarket":450,"Display ORIGINAL":650,"Sticla LCD":400,"Acumulator":250,"Sticla Spate":400,"Difuzor / Buzzer":150,"Modul Incarcare":330,"Microfon":330,"Mufa Jack":330,"Camera Principala":600,"Geam Camera":250,"Flex Proxy":450,"Buton Power - Volum":300,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":370,"Carcasa Completa":1000,"Curatare Apa (Oxid)":200,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 11 Pro Max": {"Display Aftermarket":370,"Display ORIGINAL":650,"Sticla LCD":400,"Acumulator":260,"Sticla Spate":380,"Difuzor / Buzzer":150,"Modul Incarcare":350,"Microfon":350,"Mufa Jack":350,"Geam Camera":220,"Flex Proxy":520,"Buton Power - Volum":150,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":400,"Carcasa Completa":750,"Curatare Apa (Oxid)":200,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 11 Pro": {"Display Aftermarket":350,"Display ORIGINAL":500,"Sticla LCD":400,"Acumulator":250,"Sticla Spate":380,"Difuzor / Buzzer":250,"Modul Incarcare":300,"Microfon":300,"Mufa Jack":300,"Camera Principala":550,"Geam Camera":180,"Flex Proxy":490,"Buton Power - Volum":150,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":320,"Carcasa Completa":700,"Curatare Apa (Oxid)":180,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone 11": {"Display Aftermarket":350,"Display ORIGINAL":500,"Sticla LCD":400,"Acumulator":250,"Sticla Spate":380,"Difuzor / Buzzer":390,"Modul Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":550,"Geam Camera":170,"Flex Proxy":450,"Buton Power - Volum":290,"Montaj Placa de Baza":200,"Reconditionare Sticla Spate":450,"Carcasa Completa":400,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Folii de Protectie":100},
+  "iPhone Xs Max": {"Display Aftermarket":350,"Display ORIGINAL":600,"Sticla LCD":400,"Acumulator":220,"Sticla Spate":300,"Difuzor / Buzzer":200,"Modul Incarcare":200,"Microfon":250,"Mufa Jack":250,"Camera Principala":450,"Geam Camera":140,"Flex Proxy":270,"Buton Power - Volum":140,"Montaj Placa de Baza":150,"Reconditionare Sticla Spate":300,"Carcasa Completa":400,"Curatare Apa (Oxid)":145,"Resoftare / Update":130,"Folii de Protectie":100},
+  "iPhone XS": {"Display Aftermarket":300,"Display ORIGINAL":450,"Sticla LCD":350,"Acumulator":230,"Sticla Spate":300,"Difuzor / Buzzer":170,"Modul Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":450,"Geam Camera":160,"Flex Proxy":250,"Buton Power - Volum":140,"Montaj Placa de Baza":150,"Reconditionare Sticla Spate":350,"Carcasa Completa":400,"Curatare Apa (Oxid)":145,"Resoftare / Update":110,"Folii de Protectie":100},
+  "iPhone XR": {"Display Aftermarket":330,"Display ORIGINAL":450,"Sticla LCD":350,"Acumulator":200,"Sticla Spate":300,"Difuzor / Buzzer":180,"Modul Incarcare":230,"Microfon":230,"Mufa Jack":230,"Camera Principala":350,"Geam Camera":140,"Flex Proxy":250,"Buton Power - Volum":120,"Montaj Placa de Baza":150,"Reconditionare Sticla Spate":260,"Carcasa Completa":360,"Curatare Apa (Oxid)":145,"Resoftare / Update":120,"Folii de Protectie":100},
+  "iPhone X": {"Display Aftermarket":300,"Display ORIGINAL":450,"Sticla LCD":350,"Acumulator":230,"Sticla Spate":300,"Difuzor / Buzzer":140,"Modul Incarcare":210,"Microfon":210,"Mufa Jack":210,"Camera Principala":350,"Geam Camera":140,"Flex Proxy":220,"Buton Power - Volum":140,"Montaj Placa de Baza":150,"Reconditionare Sticla Spate":280,"Carcasa Completa":400,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Folii de Protectie":80}
+};
+
+const SAMSUNG_DATA = {
+  "Samsung S25 Ultra": {"Display":1850,"Acumulator":480,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":400,"Microfon":400,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S25 Plus": {"Display":980,"Acumulator":400,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":370,"Microfon":370,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S25": {"Display":950,"Acumulator":400,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S24 Ultra": {"Display":1550,"Sticla":700,"Acumulator":320,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S24 Plus": {"Display":1100,"Sticla":600,"Acumulator":320,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S24": {"Display":800,"Sticla":600,"Acumulator":340,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S23 Ultra": {"Display":1400,"Sticla":700,"Acumulator":320,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S23 Plus": {"Display":800,"Sticla":600,"Acumulator":340,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":340,"Microfon":340,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S23": {"Display":750,"Sticla":600,"Acumulator":340,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":340,"Microfon":340,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S22 Ultra": {"Display":1250,"Sticla":650,"Acumulator":340,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":280,"Microfon":280,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S22 Plus": {"Display":800,"Sticla":550,"Acumulator":350,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":280,"Microfon":280,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S22": {"Display":800,"Sticla":550,"Acumulator":340,"Casca / Sita":250,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":280,"Microfon":280,"Geam Camera":150,"Montaj Placa de Baza":150,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S21 Ultra / 5g": {"Display":1200,"Sticla":700,"Acumulator":350,"Casca / Sita":180,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Mufa Jack":350,"Camera Principala":550,"Geam Camera":150,"Camera Selfie":350,"Buton Power - Volum":300,"Montaj Placa de Baza":200,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S21 Plus": {"Display":950,"Sticla":550,"Acumulator":310,"Casca / Sita":180,"Difuzor / Buzzer":220,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":520,"Geam Camera":150,"Camera Selfie":300,"Buton Power - Volum":300,"Montaj Placa de Baza":200,"Inlocuire Capac":450,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S21": {"Display":650,"Sticla":550,"Acumulator":310,"Casca / Sita":180,"Difuzor / Buzzer":200,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":350,"Geam Camera":170,"Camera Selfie":250,"Buton Power - Volum":250,"Montaj Placa de Baza":200,"Inlocuire Capac":390,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S20 FE": {"Sticla":550,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":200,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":280,"Geam Camera":170,"Camera Selfie":250,"Buton Power - Volum":250,"Montaj Placa de Baza":150,"Inlocuire Capac":350,"Curatare Apa (Oxid)":150,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S20": {"Display":850,"Sticla":650,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":290,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":410,"Geam Camera":170,"Camera Selfie":190,"Buton Power - Volum":290,"Montaj Placa de Baza":150,"Inlocuire Capac":290,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S20 Plus": {"Display":1100,"Sticla":750,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":270,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":420,"Geam Camera":170,"Camera Selfie":210,"Buton Power - Volum":220,"Montaj Placa de Baza":100,"Inlocuire Capac":390,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S20 Ultra / 5g": {"Display":1100,"Sticla":750,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":350,"Modul/Mufa Incarcare":350,"Microfon":350,"Mufa Jack":350,"Camera Principala":510,"Geam Camera":190,"Camera Selfie":290,"Buton Power - Volum":220,"Montaj Placa de Baza":100,"Inlocuire Capac":390,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S10 Plus": {"Display":1250,"Sticla":650,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":220,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":320,"Geam Camera":140,"Camera Selfie":190,"Buton Power - Volum":200,"Montaj Placa de Baza":100,"Inlocuire Capac":350,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S10": {"Display":1150,"Sticla":650,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":199,"Modul/Mufa Incarcare":210,"Microfon":210,"Mufa Jack":210,"Camera Principala":280,"Geam Camera":140,"Camera Selfie":180,"Buton Power - Volum":190,"Montaj Placa de Baza":100,"Inlocuire Capac":290,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung S10 Lite / E": {"Display":850,"Sticla":400,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":190,"Microfon":190,"Mufa Jack":190,"Camera Principala":260,"Geam Camera":140,"Camera Selfie":170,"Buton Power - Volum":180,"Montaj Placa de Baza":100,"Inlocuire Capac":290,"Curatare Apa (Oxid)":145,"Resoftare / Update":150,"Salvare Date":150},
+  "Samsung A10": {"Display":265,"Sticla":320,"Acumulator":180,"Casca / Sita":130,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":140,"Microfon":140,"Mufa Jack":140,"Geam Camera":80},
+  "Samsung A20": {"Display":350,"Sticla":320,"Acumulator":180,"Casca / Sita":130,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":140,"Microfon":140,"Mufa Jack":140,"Geam Camera":80},
+  "Samsung A30": {"Display":450,"Sticla":320,"Acumulator":180,"Casca / Sita":130,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":230,"Microfon":230,"Mufa Jack":230,"Geam Camera":80},
+  "Samsung A40": {"Display":490,"Sticla":320,"Acumulator":180,"Casca / Sita":130,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":230,"Microfon":230,"Mufa Jack":230,"Geam Camera":120},
+  "Samsung A50": {"Display":345,"Sticla":320,"Acumulator":180,"Casca / Sita":130,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":230,"Microfon":230,"Mufa Jack":230,"Geam Camera":120},
+  "Samsung A51": {"Display":480,"Sticla":320,"Acumulator":170,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":210,"Geam Camera":140,"Camera Selfie":180,"Buton Power - Volum":180,"Montaj Placa de Baza":100,"Inlocuire Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A52": {"Display":510,"Sticla":320,"Acumulator":160,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":180,"Microfon":180,"Mufa Jack":180,"Camera Principala":180,"Geam Camera":150,"Camera Selfie":150,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A53 5G": {"Display":530,"Sticla":320,"Acumulator":180,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":170,"Geam Camera":120,"Camera Selfie":150,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":150,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A54 5G": {"Display":530,"Sticla":320,"Acumulator":220,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":160,"Geam Camera":90,"Camera Selfie":140,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":170,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A55 5G": {"Display":540,"Sticla":320,"Acumulator":220,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":160,"Geam Camera":90,"Camera Selfie":170,"Buton Power - Volum":190,"Montaj Placa de Baza":100,"Inlocuire Capac":170,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A35 5G": {"Display":520,"Sticla":320,"Acumulator":220,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":180,"Geam Camera":90,"Camera Selfie":150,"Buton Power - Volum":190,"Montaj Placa de Baza":100,"Inlocuire Capac":170,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A34 5G": {"Display":530,"Sticla":320,"Acumulator":220,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":150,"Geam Camera":90,"Camera Selfie":140,"Buton Power - Volum":130,"Montaj Placa de Baza":100,"Inlocuire Capac":150,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A33 5G": {"Display":480,"Sticla":320,"Acumulator":170,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":140,"Microfon":140,"Mufa Jack":140,"Camera Principala":180,"Geam Camera":120,"Camera Selfie":150,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":150,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A25 5G": {"Display":500,"Sticla":320,"Acumulator":220,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":190,"Geam Camera":90,"Camera Selfie":160,"Buton Power - Volum":190,"Montaj Placa de Baza":100,"Inlocuire Capac":170,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A24": {"Display":530,"Sticla":320,"Acumulator":150,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":200,"Microfon":200,"Mufa Jack":200,"Camera Principala":170,"Geam Camera":120,"Camera Selfie":140,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":150,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A23": {"Display":350,"Sticla":320,"Acumulator":180,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":150,"Microfon":150,"Mufa Jack":150,"Camera Principala":180,"Geam Camera":120,"Camera Selfie":150,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A14": {"Display":310,"Sticla":320,"Acumulator":150,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":200,"Microfon":200,"Mufa Jack":200,"Camera Principala":170,"Geam Camera":120,"Camera Selfie":140,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":150,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A13": {"Display":310,"Sticla":320,"Acumulator":150,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":180,"Microfon":180,"Mufa Jack":180,"Camera Principala":170,"Geam Camera":150,"Camera Selfie":150,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung A12": {"Display":300,"Sticla":320,"Acumulator":140,"Casca / Sita":180,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":180,"Microfon":180,"Mufa Jack":180,"Camera Principala":190,"Geam Camera":130,"Camera Selfie":170,"Buton Power - Volum":180,"Montaj Placa de Baza":100,"Inlocuire Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 20 Ultra 5G": {"Display":1550,"Sticla":750,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":390,"Geam Camera":150,"Camera Selfie":230,"Buton Power - Volum":250,"Montaj Placa de Baza":100,"Inlocuire Capac":390,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 20": {"Display":1150,"Sticla":600,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250,"Camera Principala":350,"Geam Camera":150,"Camera Selfie":200,"Buton Power - Volum":220,"Montaj Placa de Baza":100,"Inlocuire Capac":350,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 10 Plus": {"Display":1650,"Sticla":690,"Acumulator":260,"Casca / Sita":140,"Difuzor / Buzzer":220,"Modul/Mufa Incarcare":220,"Microfon":220,"Mufa Jack":220,"Camera Principala":250,"Geam Camera":130,"Camera Selfie":210,"Buton Power - Volum":200,"Montaj Placa de Baza":100,"Inlocuire Capac":320,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 10": {"Display":1150,"Sticla":650,"Acumulator":260,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":210,"Microfon":210,"Mufa Jack":210,"Camera Principala":220,"Geam Camera":110,"Camera Selfie":190,"Buton Power - Volum":190,"Montaj Placa de Baza":100,"Inlocuire Capac":290,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 9": {"Display":950,"Sticla":590,"Acumulator":240,"Casca / Sita":130,"Difuzor / Buzzer":170,"Modul/Mufa Incarcare":190,"Microfon":190,"Mufa Jack":190,"Camera Principala":190,"Geam Camera":90,"Camera Selfie":180,"Buton Power - Volum":160,"Montaj Placa de Baza":100,"Inlocuire Capac":250,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Note 8": {"Display":1050,"Sticla":550,"Acumulator":180,"Casca / Sita":120,"Difuzor / Buzzer":150,"Modul/Mufa Incarcare":160,"Microfon":160,"Mufa Jack":160,"Camera Principala":150,"Geam Camera":90,"Camera Selfie":140,"Buton Power - Volum":150,"Montaj Placa de Baza":100,"Inlocuire Capac":170,"Curatare Apa (Oxid)":145,"Resoftare / Update":100,"Salvare Date":100},
+  "Samsung Z Fold 7": {"Display":2200,"Sticla":950,"Acumulator":350,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250},
+  "Samsung Z Fold 6": {"Display":2000,"Sticla":900,"Acumulator":350,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250},
+  "Samsung Z Fold 5": {"Display":1900,"Sticla":850,"Acumulator":300,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250},
+  "Samsung Z Fold 4": {"Display":1800,"Sticla":800,"Acumulator":300,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250},
+  "Samsung Z Fold 3": {"Display":1550,"Sticla":750,"Acumulator":250,"Casca / Sita":180,"Difuzor / Buzzer":210,"Modul/Mufa Incarcare":250,"Microfon":250,"Mufa Jack":250},
+  "Samsung Z Flip 7":{"Display":1200,"Sticla":500,"Acumulator":200,"Casca / Sita":150,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":200,"Microfon":200,"Mufa Jack":200},
+  "Samsung Z Flip 6": {"Display":1100,"Sticla":480,"Acumulator":200,"Casca / Sita":150,"Difuzor / Buzzer":180,"Modul/Mufa Incarcare":200,"Microfon":200,"Mufa Jack":200},
+  "Samsung Z Flip 5": {"Display":1000,"Sticla":450,"Acumulator":180,"Casca / Sita":150,"Difuzor / Buzzer":170,"Modul/Mufa Incarcare":190,"Microfon":190,"Mufa Jack":190},
+  "Samsung Z Flip 4": {"Display":950,"Sticla":420,"Acumulator":180,"Casca / Sita":150,"Difuzor / Buzzer":170,"Modul/Mufa Incarcare":190,"Microfon":190,"Mufa Jack":190},
+  "Samsung Z Flip 3": {"Display":900,"Sticla":400,"Acumulator":160,"Casca / Sita":150,"Difuzor / Buzzer":160,"Modul/Mufa Incarcare":180,"Microfon":180,"Mufa Jack":180}
+};
+
+const ALTE_HUAWEI_DATA = {
+  "Huawei P30 Pro": {"Display":1290,"Sticla":690,"Acumulator":240,"Casca / Sita":160,"Difuzor / Buzzer":300,"Mufa Incarcare":250,"Microfon":230,"Mufa Jack":200,"Camera":350,"Geam Camera":200,"Buton Power - Volum":250,"Montaj Placa de Baza":120,"Reconditionare Capac":370,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei P30": {"Display":1000,"Acumulator":180,"Casca / Sita":140,"Difuzor / Buzzer":180,"Mufa Incarcare":200,"Microfon":200,"Mufa Jack":150,"Camera":250,"Geam Camera":170,"Buton Power - Volum":160,"Montaj Placa de Baza":100,"Reconditionare Capac":200,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei P30 Lite": {"Display":350,"Acumulator":150,"Casca / Sita":120,"Difuzor / Buzzer":150,"Mufa Incarcare":180,"Microfon":180,"Mufa Jack":130,"Camera":200,"Geam Camera":130,"Buton Power - Volum":140,"Montaj Placa de Baza":90,"Reconditionare Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei P40 Pro": {"Display":1390,"Sticla":850,"Acumulator":350,"Casca / Sita":260,"Difuzor / Buzzer":300,"Mufa Incarcare":300,"Microfon":280,"Mufa Jack":250,"Camera":400,"Geam Camera":250,"Buton Power - Volum":300,"Montaj Placa de Baza":130,"Reconditionare Capac":380,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei P40": {"Display":1180,"Sticla":290,"Acumulator":220,"Casca / Sita":170,"Difuzor / Buzzer":160,"Mufa Incarcare":160,"Microfon":180,"Mufa Jack":170,"Camera":190,"Geam Camera":170,"Buton Power - Volum":200,"Montaj Placa de Baza":100,"Reconditionare Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei P40 Lite": {"Display":330,"Acumulator":180,"Casca / Sita":170,"Difuzor / Buzzer":160,"Mufa Incarcare":160,"Microfon":180,"Mufa Jack":170,"Camera":190,"Geam Camera":170,"Buton Power - Volum":170,"Montaj Placa de Baza":100,"Reconditionare Capac":180,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei Mate 20 Pro": {"Display":1450,"Sticla":650,"Acumulator":220,"Casca / Sita":200,"Difuzor / Buzzer":200,"Mufa Incarcare":180,"Microfon":190,"Mufa Jack":190,"Camera":180,"Geam Camera":190,"Buton Power - Volum":200,"Montaj Placa de Baza":120,"Reconditionare Capac":250,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90},
+  "Huawei Mate 20": {"Display":350,"Acumulator":200,"Casca / Sita":140,"Difuzor / Buzzer":110,"Mufa Incarcare":140,"Microfon":140,"Mufa Jack":150,"Camera":150,"Geam Camera":140,"Buton Power - Volum":160,"Montaj Placa de Baza":100,"Reconditionare Capac":140,"Curatare Apa (Oxid)":145,"Resoftare / Update":90,"Salvare Date":90}
+};
+
+const LAPTOP_DATA = {
+  "Laptop (general)": {"Instalare Sistem de Operare":150,"Instalare SSD":100,"Curatare Praf + Pasta Termo":200,"Instalare Programe":80,"Upgrade SSD 128GB":390,"Upgrade SSD 256GB":490,"Upgrade SSD 512GB":650,"Upgrade SSD 1TB":1150,"Upgrade SSD 2TB":1450,"Manopera Inlocuire Piese":100}
+};
+
+const ALTE_DATA = { ...ALTE_HUAWEI_DATA, ...LAPTOP_DATA };
+
+const HUAWEI_DATA = {"P30":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P30 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nova 5T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 30":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 30 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P40":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P40 Lite":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P40 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P40 Pro+":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 40":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 40 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P50":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"P50 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nova 9":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nova 10":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nova 10 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 50":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mate 50 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pura 70":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pura 70 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pura 70 Ultra":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const HONOR_DATA = {"Honor 90":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor 90 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor Magic 5 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor Magic 6 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor Magic 7 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor 200":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor 200 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor X8b":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor X9b":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Honor X9c":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const XIAOMI_DATA = {"Mi 10":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 10 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 10T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 10T Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 10 Lite":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 11":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 11 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 11 Ultra":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Mi 11 Lite 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 12":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 12 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 12T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 12T Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 12 Lite":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 13":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 13 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 13T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 13T Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 13 Lite":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 14":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 14 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 14T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 14T Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 15":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Xiaomi 15 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const OPPO_DATA = {"Reno 4":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 4 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 5":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 5 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 6":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 6 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 7":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 7 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 8":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 8 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 10":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 10 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 12":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 12 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 13":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Reno 13 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X2":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X2 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X3":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X3 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X5":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X5 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X6":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X6 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X7":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Find X7 Ultra":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const MOTOROLA_DATA = {"Moto G9 Play":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G9 Plus":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G9 Power":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G30":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G50":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G60":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G72":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G82 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G14":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G24":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G34 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G54 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G64 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G84 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto G85 5G":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 20":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 20 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 30":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 30 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 30 Neo":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 30 Ultra":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 40":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 40 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 40 Neo":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 50":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 50 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 50 Ultra":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Moto Edge 50 Fusion":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const ONEPLUS_DATA = {"OnePlus 8":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 8 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 8T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 9":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 9 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 9R":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 10 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 10T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 11":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 11R":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 12":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 12R":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 13":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"OnePlus 13R":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord 2":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord 2T":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord 3":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord 4":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord CE":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord CE 2":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord CE 3":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Nord CE 4":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const REALME_DATA = {"Realme 8":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 8 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 8i":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 9":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 9 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 9 Pro+":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 9i":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 10":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 10 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 10 Pro+":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 11":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 11 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 11 Pro+":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 12":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 12 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme 12 Pro+":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT 2":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT 2 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT Neo 2":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT Neo 3":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT Neo 5":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme GT 6":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C31":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C33":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C35":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C51":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C53":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C55":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Realme C67":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+const GOOGLE_DATA = {"Pixel 6":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 6 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 6a":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 7":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 7 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 7a":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 8":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 8 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 8a":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 9":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 9 Pro":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 9 Pro XL":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel 9 Pro Fold":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0},"Pixel Fold":{"Display":0,"Acumulator":0,"Casca / Sita":0,"Difuzor / Buzzer":0,"Modul/Mufa Incarcare":0,"Microfon":0,"Geam Camera":0,"Montaj Placa de Baza":0,"Inlocuire Capac":0,"Curatare Apa (Oxid)":0,"Resoftare / Update":0,"Salvare Date":0}};
+
+const BRANDS = [
+  { id: "iphone",   name: "iPhone",           data: IPHONE_DATA },
+  { id: "samsung",  name: "Samsung",          data: SAMSUNG_DATA },
+  { id: "huawei",   name: "Huawei",           data: HUAWEI_DATA },
+  { id: "xiaomi",   name: "Xiaomi",           data: XIAOMI_DATA },
+  { id: "oneplus",  name: "OnePlus",          data: ONEPLUS_DATA },
+  { id: "motorola", name: "Motorola",         data: MOTOROLA_DATA },
+  { id: "realme",   name: "Realme",           data: REALME_DATA },
+  { id: "honor",    name: "Honor",            data: HONOR_DATA },
+  { id: "oppo",     name: "Oppo",             data: OPPO_DATA },
+  { id: "google",   name: "Google",           data: GOOGLE_DATA },
+  { id: "alte",     name: "Alte dispozitive", data: ALTE_DATA, wide: true }
+];
+
+const BRAND_LOGOS = {
+  iphone:   "data:image/svg+xml,%3Csvg fill='%23000000' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'/%3E%3C/svg%3E",
+  samsung:  "data:image/svg+xml,%3Csvg fill='%231428A0' role='img' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522'/%3E%3C/svg%3E",
+  huawei:   "data:image/svg+xml,%3Csvg%20fill%3D%27%23CF0A2C%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M3.67%206.14S1.82%207.91%201.72%209.78v.35c.08%201.51%201.22%202.4%201.22%202.4%201.83%201.79%206.26%204.04%207.3%204.55%200%200%20.06.03.1-.01l.02-.04v-.04C7.52%2010.8%203.67%206.14%203.67%206.14zM9.65%2018.6c-.02-.08-.1-.08-.1-.08l-7.38.26c.8%201.43%202.15%202.53%203.56%202.2.96-.25%203.16-1.78%203.88-2.3.06-.05.04-.09.04-.09zm.08-.78C6.49%2015.63.21%2012.28.21%2012.28c-.15.46-.2.9-.21%201.3v.07c0%201.07.4%201.82.4%201.82.8%201.69%202.34%202.2%202.34%202.2.7.3%201.4.31%201.4.31.12.02%204.4%200%205.54%200%20.05%200%20.08-.05.08-.05v-.06c0-.03-.03-.05-.03-.05zM9.06%203.19a3.42%203.42%200%2000-2.57%203.15v.41c.03.6.16%201.05.16%201.05.66%202.9%203.86%207.65%204.55%208.65.05.05.1.03.1.03a.1.1%200%2000.06-.1c1.06-10.6-1.11-13.42-1.11-13.42-.32.02-1.19.23-1.19.23zm8.299%202.27s-.49-1.8-2.44-2.28c0%200-.57-.14-1.17-.22%200%200-2.18%202.81-1.12%2013.43.01.07.06.08.06.08.07.03.1-.03.1-.03.72-1.03%203.9-5.76%204.55-8.64%200%200%20.36-1.4.02-2.34zm-2.92%2013.07s-.07%200-.09.05c0%200-.01.07.03.1.7.51%202.85%202%203.88%202.3%200%200%20.16.05.43.06h.14c.69-.02%201.9-.37%203-2.26l-7.4-.25zm7.83-8.41c.14-2.06-1.94-3.97-1.94-3.98%200%200-3.85%204.66-6.67%2010.8%200%200-.03.08.02.13l.04.01h.06c1.06-.53%205.46-2.77%207.28-4.54%200%200%201.15-.93%201.21-2.42zm1.52%202.14s-6.28%203.37-9.52%205.55c0%200-.05.04-.03.11%200%200%20.03.06.07.06%201.16%200%205.56%200%205.67-.02%200%200%20.57-.02%201.27-.29%200%200%201.56-.5%202.37-2.27%200%200%20.73-1.45.17-3.14z%27%2F%3E%3C%2Fsvg%3E",
+  xiaomi:   "data:image/svg+xml,%3Csvg%20fill%3D%27%23FF6900%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M12%200C8.016%200%204.756.255%202.493%202.516.23%204.776%200%208.033%200%2012.012c0%203.98.23%207.235%202.494%209.497C4.757%2023.77%208.017%2024%2012%2024c3.983%200%207.243-.23%209.506-2.491C23.77%2019.247%2024%2015.99%2024%2012.012c0-3.984-.233-7.243-2.502-9.504C19.234.252%2015.978%200%2012%200zM4.906%207.405h5.624c1.47%200%203.007.068%203.764.827.746.746.827%202.233.83%203.676v4.54a.15.15%200%200%201-.152.147h-1.947a.15.15%200%200%201-.152-.148V11.83c-.002-.806-.048-1.634-.464-2.051-.358-.36-1.026-.441-1.72-.458H7.158a.15.15%200%200%200-.151.147v6.98a.15.15%200%200%201-.152.148H4.906a.15.15%200%200%201-.15-.148V7.554a.15.15%200%200%201%20.15-.149zm12.131%200h1.949a.15.15%200%200%201%20.15.15v8.892a.15.15%200%200%201-.15.148h-1.949a.15.15%200%200%201-.151-.148V7.554a.15.15%200%200%201%20.151-.149zM8.92%2010.948h2.046c.083%200%20.15.066.15.147v5.352a.15.15%200%200%201-.15.148H8.92a.15.15%200%200%201-.152-.148v-5.352a.15.15%200%200%201%20.152-.147Z%27%2F%3E%3C%2Fsvg%3E",
+  oneplus:  "data:image/svg+xml,%3Csvg%20fill%3D%27%23F5010C%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M0%203.74V24h20.26V12.428h-2.256v9.317H2.254V5.995h9.318V3.742zM18.004%200v3.74h-3.758v2.256h3.758v3.758h2.255V5.996H24V3.74h-3.758V0zm-6.45%2018.756V8.862H9.562c0%20.682-.228%201.189-.577%201.504-.367.297-.91.437-1.556.437h-.245v1.625h2.133v6.31h2.237z%27%2F%3E%3C%2Fsvg%3E",
+  motorola: "data:image/svg+xml,%3Csvg%20fill%3D%27%23007CC2%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M12%200C5.373%200%200%205.373%200%2012s5.373%2012%2012%2012%2012-5.373%2012-12C24.002%205.375%2018.632.002%2012.007%200H12zm7.327%2018.065s-.581-2.627-1.528-4.197c-.514-.857-1.308-1.553-2.368-1.532-.745%200-1.399.423-2.2%201.553-.469.77-.882%201.573-1.235%202.403%200%200-.29-.675-.63-1.343a8.038%208.038%200%200%200-.605-1.049c-.804-1.13-1.455-1.539-2.2-1.553-1.049-.021-1.854.675-2.364%201.528-.948%201.574-1.528%204.197-1.528%204.197h-.864l4.606-15.12%203.56%2011.804.024.021.024-.021%203.56-11.804%204.61%2015.113h-.862z%27%2F%3E%3C%2Fsvg%3E",
+  realme:   "data:image/svg+xml,%3Csvg%20fill%3D%27%23FF6900%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M4%202h9c2.8%200%205%202.2%205%205%200%202-1.2%203.8-2.9%204.6L19%2022h-3.5l-3.5-9.5H7V22H4V2zm3%203v5.5h6c1.4%200%202.5-1.1%202.5-2.5S14.4%205%2013%205H7z%27%2F%3E%3C%2Fsvg%3E",
+  honor:    "data:image/svg+xml,%3Csvg%20fill%3D%27%23CF0A2C%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M2.601%209.753v1.823H.807V9.753H0v4.498h.807v-1.874h1.794v1.874h.807V9.753h-.807Zm18.671.801h.898c.369%200%20.667.297.667.662a.665.665%200%200%201-.667.663h-.898v-1.325Zm-.806-.801v4.498h.806v-2.002l1.68%202.002H24l-1.376-1.64a1.462%201.462%200%200%200-.444-2.858h-1.716.002Zm-7.63-.014v2.807l-1.959-2.807h-.644v4.498h.807v-2.82l1.968%202.82h.633V9.739h-.805Zm-7.532%202.26c0-.832.68-1.506%201.517-1.506A1.51%201.51%200%200%201%208.337%2012c0%20.832-.679%201.506-1.516%201.506-.403%200-.789-.159-1.073-.441A1.504%201.504%200%200%201%205.304%2012v-.001ZM4.497%2012c0%20.933.566%201.774%201.434%202.132.869.357%201.868.16%202.533-.5.664-.66.863-1.653.503-2.515a2.324%202.324%200%200%200-2.146-1.425%202.316%202.316%200%200%200-2.323%202.307L4.497%2012Zm11.04-.001a1.513%201.513%200%200%201%201.518-1.506c.838%200%201.516.675%201.516%201.507a1.513%201.513%200%200%201-1.518%201.506c-.402%200-.788-.159-1.072-.441a1.5%201.5%200%200%201-.444-1.066ZM14.73%2012c0%20.933.566%201.774%201.434%202.132.868.357%201.868.16%202.532-.5.665-.66.864-1.653.504-2.515a2.325%202.325%200%200%200-2.147-1.425%202.316%202.316%200%200%200-2.323%202.307V12Z%27%2F%3E%3C%2Fsvg%3E",
+  oppo:     "data:image/svg+xml,%3Csvg%20fill%3D%27%231D8348%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M2.85%2012.786h-.001C1.639%2012.774.858%2012.2.858%2011.321s.781-1.452%201.99-1.465c1.21.013%201.992.588%201.992%201.465s-.782%201.453-1.99%201.465zm.034-3.638h-.073C1.156%209.175%200%2010.068%200%2011.32s1.156%202.147%202.811%202.174h.073c1.655-.027%202.811-.921%202.811-2.174S4.54%209.175%202.885%209.148zm18.27%203.638c-1.21-.012-1.992-.587-1.992-1.465s.782-1.452%201.991-1.465c1.21.013%201.991.588%201.991%201.465s-.781%201.453-1.99%201.465zm.035-3.638h-.073c-1.655.027-2.811.92-2.811%202.173s1.156%202.147%202.81%202.174h.074C22.844%2013.468%2024%2012.574%2024%2011.32s-1.156-2.146-2.811-2.173zm-6.126%203.638c-1.21-.012-1.99-.587-1.99-1.465s.78-1.452%201.99-1.465c1.21.013%201.991.588%201.991%201.465s-.781%201.453-1.99%201.465zm.036-3.638h-.073c-.789.013-1.464.222-1.955.574v-.37h-.857v5.5h.857v-1.931c.49.351%201.166.56%201.954.574h.074c1.655-.027%202.81-.921%202.81-2.174s-1.155-2.146-2.81-2.173zm-6.144%203.638c-1.21-.012-1.99-.587-1.99-1.465s.78-1.452%201.99-1.465c1.21.013%201.991.588%201.991%201.465s-.781%201.453-1.99%201.465zm.037-3.638H8.92c-.789.013-1.464.222-1.955.574v-.37h-.856v5.5h.856v-1.931c.491.351%201.166.56%201.955.574a3.728%203.728%200%200%200%20.073%200c1.655-.027%202.811-.921%202.811-2.174s-1.156-2.146-2.81-2.173z%27%2F%3E%3C%2Fsvg%3E",
+  google:   "data:image/svg+xml,%3Csvg%20fill%3D%27%234285F4%27%20role%3D%27img%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M12.48%2010.92v3.28h7.84c-.24%201.84-.853%203.187-1.787%204.133-1.147%201.147-2.933%202.4-6.053%202.4-4.827%200-8.6-3.893-8.6-8.72s3.773-8.72%208.6-8.72c2.6%200%204.507%201.027%205.907%202.347l2.307-2.307C18.747%201.44%2016.133%200%2012.48%200%205.867%200%20.307%205.387.307%2012s5.56%2012%2012.173%2012c3.573%200%206.267-1.173%208.373-3.36%202.16-2.16%202.84-5.213%202.84-7.667%200-.76-.053-1.467-.173-2.053H12.48z%27%2F%3E%3C%2Fsvg%3E",
+  alte:     null
+};
+
+function genericSlug(name) {
+  return name.toLowerCase()
+    .replace(/\+/g, '-plus')
+    .replace(/[()\/]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function getPhoneImageUrl(brandId, modelName) {
+  if (brandId === "iphone") {
+    const slug = modelName.toLowerCase()
+      .replace(/[()\/+]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return `iphonePics/processed/${slug}.webp`;
+  }
+  if (brandId === "samsung") {
+    let name = modelName.replace(/^Samsung\s+/i,"");
+    if (!/^galaxy\s/i.test(name)) name = "Galaxy " + name;
+    const slug = name.toLowerCase().replace(/[()\/+]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"");
+    return `samsungPics/processed/samsung-${slug}.webp`;
+  }
+  const folders = {
+    huawei: "huaweiPics", honor: "honorPics", xiaomi: "xiaomiPics",
+    oppo: "oppoPics", motorola: "motorolaPics", oneplus: "oneplusPics",
+    realme: "realmePics", google: "googlePics"
+  };
+  if (folders[brandId]) return `${folders[brandId]}/processed/${genericSlug(modelName)}.webp`;
+  return null;
+}
+
+const PHONE_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238176FF' stroke-width='1.5'%3E%3Crect x='5' y='1' width='14' height='22' rx='3' ry='3'/%3E%3Ccircle cx='12' cy='18.5' r='.8' fill='%238176FF' stroke='none'/%3E%3C/svg%3E";
+
+function onPhoneImgError(el) {
+  el.onerror = null;
+  el.src = PHONE_FALLBACK;
+}
+
+let state = { brand: null, series: null, model: null, cart: [], date: null, timeSlot: null, name: "", phone: "", orderId: null, mode: null, view: 'brand', description: "" };
+let currentStep = 0;
+let navDir = 1;
+
+const EASE_OUT = 'cubic-bezier(0.22,1,0.36,1)';
+const ANIM_MS  = 300;
+
+function _absorbClicks(ms) {
+  const shield = document.createElement('div');
+  shield.style.cssText = 'position:fixed;inset:0;z-index:99999;';
+  document.body.appendChild(shield);
+  setTimeout(() => shield.remove(), ms || 600);
+}
+
+function animateIn(el) {
+  const x = navDir * 26;
+  navDir = 1;
+  el.style.willChange = 'transform, opacity';
+  el.style.transition = 'none';
+  el.style.opacity    = '0';
+  el.style.transform  = `translateX(${x}px)`;
+  el.getBoundingClientRect(); // force style flush so initial state is committed
+  el.style.transition = `opacity ${ANIM_MS}ms ${EASE_OUT}, transform ${ANIM_MS}ms ${EASE_OUT}`;
+  el.style.opacity    = '1';
+  el.style.transform  = 'translateX(0)';
+  el.addEventListener('transitionend', () => {
+    el.style.willChange = '';
+    el.style.opacity = el.style.transform = el.style.transition = '';
+  }, { once: true });
+}
+
+
+function setModalSize(cls) {
+  const modal = document.getElementById('booking-modal');
+  modal.classList.remove('modal-wide');
+  if (cls) modal.classList.add(cls);
+}
+
+function setScrollable(enable) {
+  document.getElementById('booking-scroll').classList.toggle('scroll-locked', !enable);
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Load config
+  try {
+    const cfg = await fetch(`${CONFIG.API_BASE}/api/config`).then(r => r.json());
+    CONFIG.shop_phone = cfg.shop_phone || "";
+  } catch (e) {
+    console.warn("Could not load config:", e);
+  }
+
+  // Handle return from Revolut redirect (fallback path)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("confirmed") === "1") {
+    await loadPrices();
+    openBooking();
+    document.querySelector(".confirm-title").textContent = "Plata efectuata cu succes!";
+    document.querySelector(".confirm-sub").innerHTML = "Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.";
+    const oid = urlParams.get("order_id") || "";
+    document.getElementById("order-id").textContent = oid ? `Comanda ${oid}` : "";
+    goStep(3);
+    window.history.replaceState({}, "", "/");
+    return;
+  }
+  if (urlParams.get("payment_error")) {
+    localStorage.removeItem("gsm_pending_order");
+    await loadPrices();
+    openBooking();
+    showBrands();
+    alert("Plata a esuat sau a fost anulata. Te rugam sa incerci din nou.");
+    window.history.replaceState({}, "", "/");
+    return;
+  }
+
+  // User returned from Revolut checkout — check if webhook already confirmed the payment
+  const pendingOrderId = localStorage.getItem("gsm_pending_order");
+  if (pendingOrderId) {
+    localStorage.removeItem("gsm_pending_order");
+    try {
+      let data = await fetch(`${CONFIG.API_BASE}/api/order-status/${pendingOrderId}`).then(r => r.json());
+      if (data.status === "pending") {
+        // Webhook may still be in flight — wait briefly and retry once
+        await new Promise(r => setTimeout(r, 2000));
+        data = await fetch(`${CONFIG.API_BASE}/api/order-status/${pendingOrderId}`).then(r => r.json());
+      }
+      if (data.status === "completed") {
+        await loadPrices();
+        openBooking();
+        document.querySelector(".confirm-title").textContent = "Plata efectuata cu succes!";
+        document.querySelector(".confirm-sub").innerHTML = "Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.";
+        document.getElementById("order-id").textContent = `Comanda ${data.order_id}`;
+        goStep(3);
+        return;
+      }
+    } catch (e) { /* network error — fall through to normal booking */ }
+  }
+
+  await loadPrices();
+  showBrands(); if (window.parent === window) setTimeout(openBooking, 80);
+
+  // Prevent background scroll when touching outside the scrollable area or when locked.
+  // IMPORTANT: never prevent on the modal header — that kills the back/close buttons.
+  document.getElementById('booking-overlay').addEventListener('touchmove', function(e) {
+    const scroll = document.getElementById('booking-scroll');
+    const header = document.querySelector('.modal-header');
+    if (header && header.contains(e.target)) return; // always let header touches through
+    const inScroll = scroll.contains(e.target);
+    const isLocked = scroll.classList.contains('scroll-locked');
+    if (!inScroll || isLocked) e.preventDefault();
+  }, { passive: false });
+
+  // Touch tap visual feedback — mirrors desktop hover, driven by touchstart/touchmove/touchend
+  // so it works reliably on iOS (CSS :active alone is unreliable on divs).
+  (function() {
+    const SELECTOR = '.brand-card:not(.placeholder),.model-card,.time-slot,.choice-card';
+    const MOVE_THRESHOLD = 8;
+    let activeCard = null, startX = 0, startY = 0;
+    function clearActive() {
+      if (activeCard) { activeCard.classList.remove('touch-active'); activeCard = null; }
+    }
+    const scroll = document.getElementById('booking-scroll');
+    scroll.addEventListener('touchstart', function(e) {
+      clearActive();
+      const card = e.target.closest ? e.target.closest(SELECTOR) : null;
+      if (!card) return;
+      activeCard = card;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      card.classList.add('touch-active');
+    }, { passive: true });
+    scroll.addEventListener('touchmove', function(e) {
+      if (!activeCard) return;
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) clearActive();
+    }, { passive: true });
+    scroll.addEventListener('touchend', function() {
+      if (activeCard) setTimeout(clearActive, 180);
+    }, { passive: true });
+    scroll.addEventListener('touchcancel', clearActive, { passive: true });
+  })();
+
+  // ── Ghost-click fix for navigating cards ──────────────────────────────────
+  // On iOS, touchstart→touchend synthesizes a click ~300ms later at the original
+  // coordinates. If the view has changed by then, the click lands on the new card.
+  // Calling preventDefault() on touchstart kills the entire synthesized chain.
+  // We then fire the action ourselves on touchend.
+  (function() {
+    const NAV_SELECTOR = '.choice-card, .brand-card:not(.placeholder)';
+    let _tapTarget = null, _tapMoved = false;
+
+    document.getElementById('booking-overlay').addEventListener('touchstart', function(e) {
+      const card = e.target.closest(NAV_SELECTOR);
+      if (!card) { _tapTarget = null; return; }
+      _tapTarget = card;
+      _tapMoved  = false;
+    }, { passive: true });
+
+    document.getElementById('booking-overlay').addEventListener('touchmove', function() {
+      if (_tapTarget) _tapMoved = true;
+    }, { passive: true });
+
+    document.getElementById('booking-overlay').addEventListener('touchend', function() {
+      if (!_tapTarget || _tapMoved) { _tapTarget = null; return; }
+      const card = _tapTarget;
+      _tapTarget = null;
+
+      if (card.classList.contains('svc-card')) {
+        toggleService(card);
+
+      } else if (card.classList.contains('choice-card')) {
+        const mode = card.classList.contains('choice-card-servicii') ? 'servicii'
+                   : card.classList.contains('choice-card-diagnoza')  ? 'diagnoza' : null;
+        if (mode) selectMode(mode, card);
+
+      } else if (card.classList.contains('brand-card')) {
+        const mBrand = (card.getAttribute('onclick') || '').match(/selectBrand\('([^']+)'/);
+        const mSeries = (card.getAttribute('onclick') || '').match(/selectSeries\('([^']+)'/);
+        if (mBrand) selectBrand(mBrand[1], card);
+        else if (mSeries) selectSeries(mSeries[1], card);
+
+      }
+    }, { passive: true });
+  })();
+});
+
+function showBrands() {
+  state.brand = null; state.series = null; state.model = null; state.cart = [];
+  state.view = 'brand';
+  updateCartUI();
+  document.getElementById("modal-title").textContent = "Alege Marca Telefonului";
+  document.getElementById("brand-view").style.display = "block";
+  document.getElementById("series-view").style.display = "none";
+  document.getElementById("model-view").style.display = "none";
+  document.getElementById("choice-view").style.display = "none";
+  document.getElementById("service-view").style.display = "none";
+  document.getElementById("btn-next-0").style.display = "none";
+  document.getElementById("description-view").style.display = "none";
+  document.getElementById("booking-container").classList.remove("wide-container");
+  setModalSize(''); setDot(0); updateBackBtn();
+  setScrollable(true);
+  const container = document.getElementById("brand-view");
+  container.innerHTML = `<div class="brand-grid">` + BRANDS.map(b => {
+    const logoUrl = BRAND_LOGOS[b.id];
+    const iconHtml = logoUrl
+      ? `<img class="brand-logo" src="${logoUrl}" alt="${b.name}" onerror="this.style.opacity='.25'">`
+      : b.id === 'alte'
+        ? `<span style="font-size:2rem;line-height:1">📱</span>`
+        : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>`;
+    const click = b.placeholder ? '' : `onclick="selectBrand('${b.id}', this)"`;
+    return `<div class="brand-card${b.placeholder ? ' placeholder' : ''}${b.wide ? ' wide' : ''}" ${click}><div class="brand-icon">${iconHtml}</div><div class="brand-name">${b.name}</div></div>`;
+  }).join("") + `</div>`;
+  animateIn(container);
+}
+
+function selectBrand(brandId, el) {
+  const brand = BRANDS.find(b => b.id === brandId);
+  if (!brand) return;
+  function proceed() {
+    state.brand = brand; state.series = null; state.model = null; state.cart = [];
+    updateCartUI();
+    const models = Object.keys(brand.data);
+    if (models.length === 1) { selectModel(models[0]); return; }
+    if (brandId === 'samsung') { showSeriesView(); return; }
+    if (brandId === 'alte') { showChoiceView(); return; }
+    showModelGrid(models);
+  }
+  if (el) {
+    el.classList.add('tapping');
+    setTimeout(proceed, 230);
+  } else {
+    proceed();
+  }
+}
+
+function selectModel(modelName, el) {
+  if (!state.brand.data[modelName]) return;
+  function proceed() {
+    state.model = modelName; state.cart = []; state.mode = null;
+    showChoiceView();
+  }
+  if (el) { el.classList.add('tapping'); setTimeout(proceed, 230); }
+  else { proceed(); }
+}
+
+function getServicePriceRange() {
+  const services = state.brand.data[state.model];
+  if (!services) return { min: 0, max: 0 };
+  const prices = Object.values(services).filter(p => p > 0);
+  return { min: Math.min(...prices), max: Math.max(...prices) };
+}
+
+function showChoiceView() {
+  document.getElementById("modal-title").textContent = "Ce doresti?";
+  document.getElementById("brand-view").style.display = "none";
+  document.getElementById("series-view").style.display = "none";
+  document.getElementById("model-view").style.display = "none";
+  document.getElementById("choice-view").style.display = "block";
+  document.getElementById("service-view").style.display = "none";
+  document.getElementById("description-view").style.display = "none";
+  document.getElementById("btn-next-0").style.display = "none";
+  document.getElementById("booking-container").classList.remove("wide-container");
+  setModalSize(''); state.view = 'choice'; setDot(2); updateBackBtn();
+  setScrollable(false);
+
+  const isAlte = state.brand && state.brand.id === 'alte';
+  document.getElementById("choice-view").innerHTML = `
+  <div class="choice-grid">
+    ${isAlte ? '' : `<div class="choice-card choice-card-servicii" onclick="selectMode('servicii', this)">
+      <div class="choice-icon-wrap">🔧</div>
+      <div class="choice-body">
+        <div class="choice-title">Servicii &amp; Reparatii</div>
+        <div class="choice-sub">Alege serviciile de reparatie necesare</div>
+        <div class="choice-tags"><span class="choice-tag">Pret fix</span><span class="choice-tag">Garantie inclusa</span></div>
+      </div>
+      <div class="choice-right"><span class="choice-arrow">›</span></div>
+    </div>`}
+    <div class="choice-card choice-card-diagnoza" onclick="selectMode('diagnoza', this)">
+      <div class="choice-icon-wrap green">🔍</div>
+      <div class="choice-body">
+        <div class="choice-title">${isAlte ? 'Cere oferta de pret' : 'Diagnoza'}</div>
+        <div class="choice-sub">Verificare completa a dispozitivului</div>
+        ${isAlte ? '' : '<div class="choice-price-zero">0 RON</div>'}
+        <div class="choice-tags"><span class="choice-tag">Fara obligatii</span><span class="choice-tag">Pe loc</span></div>
+      </div>
+      <div class="choice-right"><span class="choice-arrow">›</span></div>
+    </div>
+  </div>`;
+  animateIn(document.getElementById("choice-view"));
+}
+
+function selectMode(mode, el) {
+  function proceed() {
+    const prevMode = state.mode;
+    state.mode = mode;
+    if (mode === 'servicii') { state.cart = []; showServiceView(); }
+    else if (mode === 'diagnoza') { state.cart = ['Diagnosticare in Locatie']; showDescriptionView(); }
+  }
+  if (el) { el.classList.add('tapping'); setTimeout(proceed, 230); }
+  else { proceed(); }
+}
+
+function showDescriptionView() {
+  document.getElementById("modal-title").textContent = "Descrie problema";
+  document.getElementById("brand-view").style.display = "none";
+  document.getElementById("series-view").style.display = "none";
+  document.getElementById("model-view").style.display = "none";
+  document.getElementById("choice-view").style.display = "none";
+  document.getElementById("service-view").style.display = "none";
+  document.getElementById("description-view").style.display = "block";
+  document.getElementById("btn-next-0").style.display = "block";
+  document.getElementById("btn-next-0").disabled = false;
+  document.getElementById("booking-container").classList.remove("wide-container");
+  setModalSize('');
+  state.view = 'description'; setDot(3); updateBackBtn();
+  setScrollable(false);
+  animateIn(document.getElementById("description-view"));
+}
+
+
+function showServiceView() {
+  const services = state.brand.data[state.model];
+  if (!services) return;
+  document.getElementById("modal-title").textContent = "Alege Serviciile";
+  document.getElementById("brand-view").style.display = "none";
+  document.getElementById("series-view").style.display = "none";
+  document.getElementById("model-view").style.display = "none";
+  document.getElementById("choice-view").style.display = "none";
+  document.getElementById("service-view").style.display = "block";
+  document.getElementById("btn-next-0").style.display = "block";
+  document.getElementById("booking-container").classList.remove("wide-container");
+  setModalSize(''); state.view = 'service'; setDot(3); updateBackBtn();
+  const serviceView = document.getElementById("service-view");
+  const grid = document.getElementById("services-grid");
+  grid.innerHTML = Object.entries(services).map(([name, price]) => `
+    <div class="svc-card" data-id="${name}" onclick="toggleService(this)">
+      <div class="name">${name}</div>
+      <div class="price">${price} lei</div>
+    </div>`).join("");
+  updateCartUI();
+  setScrollable(true);
+  animateIn(document.getElementById("service-view"));
+}
+
+const SAMSUNG_SERIES = [
+  { id: 'S', label: 'S Series', icon: '⚡' },
+  { id: 'A', label: 'A Series', icon: '📱' },
+  { id: 'Note', label: 'Note', icon: '✏️' },
+  { id: 'Z', label: 'Z Fold / Flip', icon: '🪭' },
+];
+
+function getSamsungSeriesModels(seriesId) {
+  const patterns = {
+    S:    m => /^Samsung\s+S\d/i.test(m),
+    A:    m => /^Samsung\s+A\d/i.test(m),
+    Note: m => /Note/i.test(m),
+    Z:    m => /^Samsung\s+Z\s+(Fold|Flip)/i.test(m),
+  };
+  const fn = patterns[seriesId];
+  return fn ? Object.keys(SAMSUNG_DATA).filter(fn) : [];
+}
+
+function showSeriesView() {
+  document.getElementById("modal-title").textContent = "Alege Seria";
+  document.getElementById("brand-view").style.display = "none";
+  document.getElementById("series-view").style.display = "block";
+  document.getElementById("model-view").style.display = "none";
+  document.getElementById("choice-view").style.display = "none";
+  document.getElementById("service-view").style.display = "none";
+  document.getElementById("btn-next-0").style.display = "none";
+  document.getElementById("booking-container").classList.remove("wide-container");
+  setModalSize(''); state.view = 'series'; setDot(1); updateBackBtn();
+  setScrollable(false);
+  const container = document.getElementById("series-view");
+  container.innerHTML = `<div class="brand-grid">` + SAMSUNG_SERIES.map(s => {
+    const count = getSamsungSeriesModels(s.id).length;
+    return `<div class="brand-card" data-series="${s.id}" onclick="selectSeries('${s.id}', this)">
+      <div style="font-size:1.8rem">${s.icon}</div>
+      <div class="brand-name">${s.label}</div>
+      <div class="brand-count">${count} modele</div>
+    </div>`;
+  }).join("") + `</div>`;
+  animateIn(container);
+}
+
+function selectSeries(seriesId, el) {
+  function proceed() {
+    state.series = seriesId;
+    showModelGrid(getSamsungSeriesModels(seriesId));
+  }
+  if (el) { el.classList.add('tapping'); setTimeout(proceed, 230); }
+  else { proceed(); }
+}
+
+function showModelGrid(models) {
+  const seriesObj = state.series ? SAMSUNG_SERIES.find(s => s.id === state.series) : null;
+  document.getElementById("modal-title").textContent = seriesObj ? `Samsung ${seriesObj.label}` : "Alege Modelul";
+  document.getElementById("brand-view").style.display = "none";
+  document.getElementById("series-view").style.display = "none";
+  document.getElementById("model-view").style.display = "block";
+  document.getElementById("choice-view").style.display = "none";
+  document.getElementById("service-view").style.display = "none";
+  document.getElementById("btn-next-0").style.display = "none";
+  document.getElementById("booking-container").classList.add("wide-container");
+  setModalSize('modal-wide'); state.view = 'model'; setDot(1); updateBackBtn();
+  const modelView = document.getElementById("model-view");
+  modelView.innerHTML = `<div class="model-grid">${models.map(m => {
+    const imgUrl = getPhoneImageUrl(state.brand.id, m);
+    const safeModel = m.replace(/'/g,"\\'");
+    return `<div class="model-card" onclick="selectModel('${safeModel}', this)">
+      <img class="model-thumb" src="${imgUrl}" alt="${m}" onerror="onPhoneImgError(this)" loading="lazy">
+      <span class="model-name">${m}</span>
+    </div>`;
+  }).join("")}</div>`;
+  setScrollable(true);
+  animateIn(modelView);
+}
+
+function updateBackBtn() {
+  const btn = document.getElementById('back-btn');
+  const show = (currentStep === 0 && state.view !== 'brand') || currentStep === 1 || currentStep === 2;
+  btn.style.display = show ? 'flex' : 'none';
+}
+
+function goBack() {
+  navDir = -1;
+  if (currentStep === 2) { goStep(1); return; }
+  if (currentStep === 1) {
+    document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+    document.getElementById("step-0").classList.add("active");
+    currentStep = 0;
+    document.getElementById("booking-scroll").scrollTo({ top: 0, behavior: "smooth" });
+    if (state.mode === 'diagnoza') { showChoiceView(); }
+    else {
+      document.getElementById("choice-view").style.display = "none";
+      const svcView = document.getElementById("service-view");
+      svcView.style.display = "block";
+      animateIn(svcView);
+      document.getElementById("btn-next-0").style.display = "block";
+      state.view = 'service'; setDot(2); updateBackBtn();
+      setScrollable(true);
+    }
+    return;
+  }
+  switch (state.view) {
+    case 'series': showBrands(); break;
+    case 'model': if (state.brand.id === 'samsung') showSeriesView(); else showBrands(); break;
+    case 'choice': { if (state.brand.id === 'alte') { showBrands(); break; } const models = Object.keys(state.brand.data); if (models.length === 1) { showBrands(); break; } if (state.series) showModelGrid(getSamsungSeriesModels(state.series)); else showModelGrid(models); break; }
+    case 'service': showChoiceView(); break;
+    case 'description': showChoiceView(); break;
+    default: showBrands();
+  }
+}
+
+function toggleService(el) {
+  const id = el.dataset.id;
+  const idx = state.cart.indexOf(id);
+  if (idx === -1) state.cart.push(id); else state.cart.splice(idx, 1);
+  updateCartUI();
+}
+
+function updateCartUI() {
+  document.querySelectorAll(".svc-card").forEach(card => card.classList.toggle("selected", state.cart.includes(card.dataset.id)));
+  document.getElementById("btn-next-0").disabled = state.cart.length === 0;
+}
+
+function getTotal() {
+  if (!state.brand || !state.model) return 0;
+  const services = state.brand.data[state.model];
+  return state.cart.reduce((sum, id) => { if (id === "Diagnosticare in Locatie") return sum; return sum + (services[id] || 0); }, 0);
+}
+
+function getSelectedServices() {
+  const isAlte = state.brand && state.brand.id === 'alte';
+  if (isAlte && state.mode === 'diagnoza') return [{ id: 'Oferta Pret', name: 'Oferta Pret', price: 0 }];
+  if (!state.brand || !state.model) return [];
+  const services = state.brand.data[state.model];
+  return state.cart.map(id => ({ id, name: id, price: id === "Diagnosticare in Locatie" ? 0 : (services[id] || 0) }));
+}
+
+function initDatePicker() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  flatpickr("#date-picker", {
+    minDate: tomorrow, maxDate, dateFormat: "Y-m-d", defaultDate: tomorrow, disableMobile: true,
+    onChange(sel, dateStr) { state.date = dateStr; checkStep1Ready(); }
+  });
+  const y = tomorrow.getFullYear(), m = String(tomorrow.getMonth()+1).padStart(2,"0"), d = String(tomorrow.getDate()).padStart(2,"0");
+  state.date = `${y}-${m}-${d}`;
+}
+
+function initTimeSlots() {
+  document.querySelectorAll(".time-slot").forEach(slot => {
+    slot.addEventListener("click", () => {
+      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+      slot.classList.add("selected");
+      state.timeSlot = slot.dataset.slot;
+      checkStep1Ready();
+    });
+  });
+}
+
+function checkStep1Ready() {
+  document.getElementById("btn-next-1").disabled = !(state.date && state.timeSlot && state.name.trim().length >= 2 && state.phone.replace(/\s/g,"").length >= 6);
+}
+
+document.getElementById("btn-next-0").addEventListener("click", () => goStep(1));
+document.getElementById("btn-next-1").addEventListener("click", () => goStep(2));
+
+function setDot(n) {
+  const dots = document.querySelectorAll(".steps .dot");
+  dots.forEach((d, i) => { d.classList.remove("active","done"); if (i === n) d.classList.add("active"); else if (i < n) d.classList.add("done"); });
+}
+
+function goStep(n) {
+  if (n > 0) setModalSize('');
+  if (n === 2) buildSummary();
+  setScrollable(n === 1 || n === 2);
+  const stepTitles = {1:'Programeaza Ridicarea', 2:'Sumar Comanda', 3:'Confirmare'};
+  if (stepTitles[n]) document.getElementById('modal-title').textContent = stepTitles[n];
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  const next = document.getElementById(`step-${n}`);
+  next.classList.add("active");
+  animateIn(next);
+  setDot(n + 3);
+  currentStep = n;
+  updateBackBtn();
+  if (n === 1) checkStep1Ready();
+  document.getElementById("booking-scroll").scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function editServices() {
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  document.getElementById("step-0").classList.add("active");
+  currentStep = 0;
+  document.getElementById("booking-scroll").scrollTo({ top: 0, behavior: "smooth" });
+  showChoiceView();
+}
+
+function buildSummary() {
+  const services = getSelectedServices(), total = getTotal(), isFree = total === 0, isDiagnoza = state.mode === 'diagnoza';
+  document.getElementById("summary-model-name").textContent = state.model || "—";
+  document.getElementById("summary-section-label").textContent = isDiagnoza ? "Diagnoza" : "Servicii";
+  document.getElementById("summary-services").innerHTML =
+    isDiagnoza ? `<div class="summary-svc-item"><span>Verificare completa</span><span style="color:#22c55e;font-weight:700">GRATIS</span></div>`
+      : services.map(s => `<div class="summary-svc-item"><span>${s.name}</span><span>${s.price === 0 ? 'GRATUIT' : s.price + ' lei'}</span></div>`).join("");
+  const totalEl = document.getElementById("summary-total");
+  totalEl.textContent = isFree ? "GRATUIT" : total + " lei";
+  totalEl.style.color = isFree ? "#22c55e" : "var(--accent)";
+  document.getElementById("summary-name").textContent = state.name;
+  document.getElementById("summary-phone").textContent = state.phone;
+  document.getElementById("summary-date").textContent = state.date ? state.date.split("-").reverse().join("-") : "—";
+  document.getElementById("summary-time").textContent = state.timeSlot;
+  document.getElementById("pay-amount").textContent = total;
+  document.getElementById("btn-pay").style.display = isFree ? "none" : "block";
+  document.getElementById("btn-book-free").style.display = isFree ? "block" : "none";
+}
+
+function _stopPaymentWorker() {
+  if (state.revolutWorker) { state.revolutWorker.terminate(); state.revolutWorker = null; }
+  if (state.revolutPoll) { clearInterval(state.revolutPoll); state.revolutPoll = null; }
+}
+
+function _startPaymentWorker(orderId, isInIframe, revolutTab) {
+  _stopPaymentWorker();
+  const pollUrl = window.location.origin + "/api/order-status/" + orderId;
+  if (PAYMENT_WORKER_URL) {
+    state.revolutWorker = new Worker(PAYMENT_WORKER_URL);
+    state.revolutWorker.onmessage = function(ev) {
+      _stopPaymentWorker();
+      localStorage.removeItem("gsm_pending_order");
+      if (isInIframe) {
+        window.parent.postMessage({ action: "closeRevolutTab" }, "*");
+      } else if (revolutTab && !revolutTab.closed) {
+        revolutTab.close();
+      }
+      showPaymentSuccess(ev.data);
+    };
+    state.revolutWorker.postMessage({ cmd: "start", url: pollUrl });
+  }
+  if (!isInIframe) {
+    state.revolutPoll = setInterval(function() {
+      if (revolutTab && revolutTab.closed) {
+        _stopPaymentWorker();
+        localStorage.removeItem("gsm_pending_order");
+        showPaymentError();
+      }
+    }, 500);
+  }
+}
+
+function setPayLoading(loading) {
+  const btn = document.getElementById("btn-pay");
+  if (loading) { btn.disabled = true; btn.textContent = "Se proceseaza..."; }
+  else { btn.disabled = false; btn.innerHTML = `Plateste cu cardul — <span id="pay-amount">${getTotal()}</span> lei`; }
+}
+
+
+async function initiatePayment(method) {
+  setPayLoading(true);
+  const services = getSelectedServices(), total = getTotal();
+  try {
+    const orderResp = await fetch(`${CONFIG.API_BASE}/api/create-order`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: total, currency: CONFIG.CURRENCY, services, date: state.date, timeSlot: state.timeSlot, phone: state.phone, name: state.name, model: state.model || "", brand: state.brand.name, description: state.description }),
+    });
+    const orderData = await orderResp.json();
+    state.orderId = orderData.order_id;
+    if (orderData.mode === "live" && orderData.revolut_order_token) {
+      localStorage.setItem("gsm_pending_order", orderData.order_id);
+      startRevolutCheckout(orderData.revolut_order_token);
+    } else if (orderData.mode === "mock") {
+      showPaymentSuccess({ order_id: orderData.order_id });
+    } else {
+      throw new Error(orderData.error || "Plata nu a putut fi initiata. Te rugam sa incerci din nou.");
+    }
+  } catch (err) {
+    console.error("Payment error:", err);
+    setPayLoading(false);
+    alert("Plata a esuat. Te rugam sa incerci din nou.");
+  }
+}
+
+
+function showPaymentSuccess(data) {
+  _stopPaymentWorker();
+  const check = document.querySelector(".confirm-check");
+  check.style.background = "";
+  check.querySelector("svg").innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  document.querySelector(".confirm-title").textContent = "Plata efectuata cu succes!";
+  document.querySelector(".confirm-sub").innerHTML = "Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.";
+  document.getElementById("order-id").textContent = data && data.order_id ? `Comanda ${data.order_id}` : "";
+  setPayLoading(false); goStep(3);
+  fetch(`${CONFIG.API_BASE}/api/notify-order`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ order_id: state.orderId, services: getSelectedServices(), date: state.date, timeSlot: state.timeSlot, amount: getTotal(), phone: state.phone, name: state.name, model: state.model || (state.brand && state.brand.name) || "", description: state.description })
+  }).catch(() => {});
+}
+
+function showPaymentError() {
+  _stopPaymentWorker();
+  const check = document.querySelector(".confirm-check");
+  check.style.background = "#fee2e2";
+  check.querySelector("svg").innerHTML = '<line x1="18" y1="6" x2="6" y2="18" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>';
+  document.querySelector(".confirm-title").textContent = "Plata anulata";
+  document.querySelector(".confirm-sub").innerHTML = "Plata nu a fost finalizata.<br>Poti incerca din nou.";
+  document.getElementById("order-id").textContent = "";
+  setPayLoading(false); goStep(3);
+}
+
+window.addEventListener("message", function(e) {
+  if (!e.data || !e.data.action) return;
+  if (e.data.action === "openBooking") { openBooking(); return; }
+  if (e.data.action === "paymentDone" && e.data.confirmed === "1") {
+    localStorage.removeItem("gsm_pending_order");
+    showPaymentSuccess({ order_id: e.data.order_id });
+  }
+  if (e.data.action === "revolutWindowClosed") {
+    const pendingOrderId = localStorage.getItem("gsm_pending_order");
+    if (!pendingOrderId) { setPayLoading(false); return; }
+    localStorage.removeItem("gsm_pending_order");
+    setTimeout(async function() {
+      try {
+        const data = await fetch(`${CONFIG.API_BASE}/api/order-status/${pendingOrderId}`).then(r => r.json());
+        if (data.status === "completed") { showPaymentSuccess(data); return; }
+      } catch(e) {}
+      showPaymentError();
+    }, 1500);
+  }
+});
+
+function startRevolutCheckout(token) {
+  if (!window.RevolutCheckout) {
+    setPayLoading(false);
+    alert("Sistemul de plata nu s-a incarcat. Reincarca pagina.");
+    return;
+  }
+  RevolutCheckout(token).then(instance => {
+    instance.payWithPopup({
+      onSuccess() {
+        fetch(`${CONFIG.API_BASE}/api/payment-complete`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: state.orderId }),
+        }).catch(() => {});
+        showPaymentSuccess({ order_id: state.orderId });
+      },
+      onError(error) { console.error("Revolut error:", error); setPayLoading(false); alert("Plata a esuat. Te rugam sa incerci din nou."); },
+      onCancel() { setPayLoading(false); },
+    });
+  }).catch(err => { console.error("RevolutCheckout init error:", err); setPayLoading(false); });
+}
+
+
+async function bookFreeAppointment() {
+  const services = getSelectedServices();
+  const btn = document.getElementById("btn-book-free");
+  btn.disabled = true; btn.textContent = "Se programeaza...";
+  try {
+    const orderResp = await fetch(`${CONFIG.API_BASE}/api/create-order`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ amount:0, currency:CONFIG.CURRENCY, services, date:state.date, timeSlot:state.timeSlot, phone:state.phone, name:state.name, model:state.model || state.brand.name, brand:state.brand.name, description:state.description }) });
+    const orderData = await orderResp.json();
+    state.orderId = orderData.order_id;
+    await fetch(`${CONFIG.API_BASE}/api/payment-complete`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ order_id:state.orderId, services, date:state.date, timeSlot:state.timeSlot, amount:0, phone:state.phone, name:state.name, model:state.model || state.brand.name, brand:state.brand.name, description:state.description }) });
+  } catch (err) { console.error("Booking error:", err); }
+  btn.disabled = false; btn.textContent = "Programeaza Diagnosticarea";
+  const check = document.querySelector(".confirm-check");
+  check.style.background = "";
+  check.querySelector("svg").innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  document.querySelector(".confirm-title").textContent = "Programare confirmata!";
+  document.querySelector(".confirm-sub").innerHTML = "Diagnosticarea a fost programata.<br>Te vom contacta in scurt timp.";
+  buildFinalSummary(); goStep(3);
+  fetch(`${CONFIG.API_BASE}/api/notify-order`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ order_id: state.orderId, services: getSelectedServices(), date: state.date, timeSlot: state.timeSlot, amount: 0, phone: state.phone, name: state.name, model: state.model || (state.brand && state.brand.name) || "", description: state.description })
+  }).catch(() => {});
+}
+
+async function completePayment(services, total) {
+  const check = document.querySelector(".confirm-check");
+  check.style.background = "";
+  check.querySelector("svg").innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  document.querySelector(".confirm-title").textContent = "Plata efectuata cu succes!";
+  document.querySelector(".confirm-sub").innerHTML = "Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.";
+  try {
+    await fetch(`${CONFIG.API_BASE}/api/payment-complete`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ order_id:state.orderId, services, date:state.date, timeSlot:state.timeSlot, amount:total, phone:state.phone, name:state.name, model:state.model || "", brand:state.brand.name, description:state.description }) });
+  } catch (err) { console.error("Notification error:", err); }
+  buildFinalSummary(); goStep(3); setPayLoading(false);
+}
+
+function buildFinalSummary() {
+  document.getElementById("order-id").textContent = state.orderId ? `Comanda ${state.orderId}` : "";
+}
+
+function resetAll() {
+  _stopPaymentWorker();
+  localStorage.removeItem("gsm_pending_order");
+  const check = document.querySelector(".confirm-check");
+  check.style.background = "";
+  check.querySelector("svg").innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  document.querySelector(".confirm-title").textContent = "Plata efectuata cu succes!";
+  document.querySelector(".confirm-sub").innerHTML = "Reparatia ta a fost programata.<br>Te vom contacta in scurt timp.";
+  document.getElementById("order-id").textContent = "";
+  state = { brand:null, series:null, model:null, cart:[], date:null, timeSlot:null, name:"", phone:"", orderId:null, mode:null, view:'brand', description:"" };
+  document.getElementById("problem-input").value = "";
+  document.getElementById("description-view").style.display = "none";
+  document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+  document.getElementById("name-input").value = "";
+  document.getElementById("phone-input").value = "";
+  document.getElementById("btn-next-0").disabled = true;
+  document.getElementById("btn-next-1").disabled = true;
+  const fp = document.querySelector("#date-picker")._flatpickr;
+  if (fp) { const t = new Date(); t.setDate(t.getDate()+1); fp.setDate(t, true); }
+  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  document.getElementById("step-0").classList.add("active");
+  currentStep = 0; setDot(0); updateBackBtn();
+  showBrands();
+}
+
+</script>
+</body>
+</html>

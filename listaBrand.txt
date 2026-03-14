@@ -1,0 +1,85 @@
+huawei - 2019 (p30)
+  P30, P30 Pro, Nova 5T
+  Mate 30, Mate 30 Pro
+  P40, P40 Lite, P40 Pro, P40 Pro+
+  Mate 40, Mate 40 Pro
+  P50, P50 Pro
+  Nova 9, Nova 10, Nova 10 Pro
+  Mate 50, Mate 50 Pro
+  Pura 70, Pura 70 Pro, Pura 70 Ultra
+
+honor - 2023 (honor 90)
+  Honor 90, Honor 90 Pro
+  Honor Magic 5 Pro
+  Honor Magic 6 Pro
+  Honor Magic 7 Pro
+  Honor 200, Honor 200 Pro
+  Honor X8b, Honor X9b, Honor X9c
+
+xiaomi - 2020 (mi 10)
+  Mi 10, Mi 10 Pro, Mi 10T, Mi 10T Pro, Mi 10 Lite
+  Mi 11, Mi 11 Pro, Mi 11 Ultra, Mi 11 Lite 5G
+  Xiaomi 12, Xiaomi 12 Pro, Xiaomi 12T, Xiaomi 12T Pro, Xiaomi 12 Lite
+  Xiaomi 13, Xiaomi 13 Pro, Xiaomi 13T, Xiaomi 13T Pro, Xiaomi 13 Lite
+  Xiaomi 14, Xiaomi 14 Pro, Xiaomi 14T, Xiaomi 14T Pro
+  Xiaomi 15, Xiaomi 15 Pro
+
+oppo - 2020 (reno 4)
+  Reno 4, Reno 4 Pro
+  Reno 5, Reno 5 Pro
+  Reno 6, Reno 6 Pro
+  Reno 7, Reno 7 Pro
+  Reno 8, Reno 8 Pro
+  Reno 10, Reno 10 Pro
+  Reno 12, Reno 12 Pro
+  Reno 13, Reno 13 Pro
+  Find X2, Find X2 Pro
+  Find X3, Find X3 Pro
+  Find X5, Find X5 Pro
+  Find X6, Find X6 Pro
+  Find X7, Find X7 Ultra
+
+motorola - 2020 (moto g9 play)
+  Moto G9 Play, Moto G9 Plus, Moto G9 Power
+  Moto G30, Moto G50, Moto G60, Moto G72, Moto G82 5G
+  Moto G14, Moto G24, Moto G34 5G, Moto G54 5G, Moto G64 5G, Moto G84 5G, Moto G85 5G
+  Moto Edge 20, Moto Edge 20 Pro
+  Moto Edge 30, Moto Edge 30 Pro, Moto Edge 30 Neo, Moto Edge 30 Ultra
+  Moto Edge 40, Moto Edge 40 Pro, Moto Edge 40 Neo
+  Moto Edge 50, Moto Edge 50 Pro, Moto Edge 50 Ultra, Moto Edge 50 Fusion
+
+oneplus - 2020 (oneplus 8)
+  OnePlus 8, OnePlus 8 Pro, OnePlus 8T
+  OnePlus 9, OnePlus 9 Pro, OnePlus 9R
+  OnePlus 10 Pro, OnePlus 10T
+  OnePlus 11, OnePlus 11R
+  OnePlus 12, OnePlus 12R
+  OnePlus 13, OnePlus 13R
+  Nord, Nord 2, Nord 2T, Nord 3, Nord 4
+  Nord CE, Nord CE 2, Nord CE 3, Nord CE 4
+
+realme - 2021 (realme 8)
+  Realme 8, Realme 8 Pro, Realme 8i
+  Realme 9, Realme 9 Pro, Realme 9 Pro+, Realme 9i
+  Realme 10, Realme 10 Pro, Realme 10 Pro+
+  Realme 11, Realme 11 Pro, Realme 11 Pro+
+  Realme 12, Realme 12 Pro, Realme 12 Pro+
+  Realme GT, Realme GT 2, Realme GT 2 Pro, Realme GT Neo 2, Realme GT Neo 3, Realme GT Neo 5, Realme GT 6
+  Realme C31, Realme C33, Realme C35, Realme C51, Realme C53, Realme C55, Realme C67
+
+google - 2021 (pixel 6)
+  Pixel 6, Pixel 6 Pro, Pixel 6a
+  Pixel 7, Pixel 7 Pro, Pixel 7a
+  Pixel 8, Pixel 8 Pro, Pixel 8a
+  Pixel 9, Pixel 9 Pro, Pixel 9 Pro XL, Pixel 9 Pro Fold
+  Pixel Fold
+
+--- images sourced from official brand sites (may look different) ---
+motorola - official site
+  Moto G82 5G, Moto G34 5G, Moto G54 5G, Moto G64 5G, Moto G84 5G, Moto G85 5G
+
+oneplus - official site
+  OnePlus 10T
+
+realme - official site
+  Realme GT 2, Realme GT 2 Pro, Realme GT Neo 3

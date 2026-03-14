@@ -1,0 +1,25 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Environment — set these in Railway Variables tab, never commit
+.env
+
+# Scrapers / tools (not needed in deployment)
+fetch_iphone_pics.py
+fetch_samsung_pics.py
+remove_white_bg.py
+db.xlsx
+
+# Backups
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db

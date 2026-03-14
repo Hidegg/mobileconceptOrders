@@ -1,0 +1,106 @@
+═══════════════════════════════════════════════════════════
+  PRODUCTION DEPLOYMENT CHECKLIST — GSM Service
+═══════════════════════════════════════════════════════════
+
+STEP 1 — Push code to GitHub
+───────────────────────────
+  git add .
+  git commit -m "deploy"
+  git push
+
+  Railway auto-deploys from the connected GitHub repo.
+  Wait for the build to finish (watch the Railway deploy log).
+
+
+STEP 2 — Set Railway environment variables
+──────────────────────────────────────────
+  In Railway → your service → Variables, set ALL of these:
+
+  REVOLUT_ENV             = live
+  REVOLUT_PUBLIC_KEY      = pk_live_...
+  REVOLUT_SECRET_KEY      = sk_live_...
+  REVOLUT_WEBHOOK_SECRET  = (get from Step 3 below)
+  TELEGRAM_BOT_TOKEN      = your bot token
+  TELEGRAM_CHAT_ID        = your chat id
+  SITE_URL                = https://mobileconcept.ro   (your WP site, no trailing slash)
+  APP_URL                 = https://web-production-cd19.up.railway.app
+  PORT                    = 8080
+
+  Leave WHATSAPP_TOKEN / WHATSAPP_PHONE_ID blank unless using WhatsApp.
+
+
+STEP 3 — Register the Revolut LIVE webhook
+──────────────────────────────────────────
+  Run in PowerShell (single line, no line breaks):
+
+  Invoke-WebRequest -Uri "https://merchant.revolut.com/api/1.0/webhooks" -Method POST -Headers @{"Authorization"="Bearer YOUR_LIVE_SECRET_KEY"; "Content-Type"="application/json"} -Body '{"url":"https://web-production-cd19.up.railway.app/api/revolut-webhook","events":["ORDER_COMPLETED","ORDER_AUTHORISED"]}'
+
+  The response JSON contains "signing_secret" — copy that value to Railway as REVOLUT_WEBHOOK_SECRET.
+  Then redeploy Railway (or it picks up env changes automatically).
+
+  SANDBOX version (for local testing only):
+  Invoke-WebRequest -Uri "https://sandbox-merchant.revolut.com/api/1.0/webhooks" -Method POST -Headers @{"Authorization"="Bearer YOUR_SANDBOX_SECRET_KEY"; "Content-Type"="application/json"} -Body '{"url":"https://web-production-cd19.up.railway.app/api/revolut-webhook","events":["ORDER_COMPLETED","ORDER_AUTHORISED"]}'
+
+
+STEP 4 — Update header.php on WordPress
+────────────────────────────────────────
+  In the iframe src, make sure it points to Railway:
+    src="https://web-production-cd19.up.railway.app"
+
+  Copy the full header.php file from this repo to your WordPress theme folder:
+    /wp-content/themes/generatepress/header.php
+
+
+═══════════════════════════════════════════════════════════
+  IF IT DOESN'T WORK — THINGS TO CHECK
+═══════════════════════════════════════════════════════════
+
+PAYMENTS / REVOLUT:
+  • Did you register the webhook with the LIVE key (not sandbox)?
+  • Is REVOLUT_WEBHOOK_SECRET set in Railway to the signing_secret from the webhook response?
+  • Is REVOLUT_ENV=live in Railway? (sandbox keys won't work in live mode)
+  • Check Railway logs: look for "[Webhook]" lines after a test payment
+  • Check Railway logs: look for "[Revolut Verify ERROR]" — means keys are wrong
+
+REDIRECT NOT RETURNING:
+  • Is APP_URL set to your Railway URL in Railway variables?
+  • Is SITE_URL set to your WordPress site URL?
+  • After paying, the tab should show "Plata efectuata cu succes!" — if it shows Revolut's page stuck, APP_URL is wrong
+  • The polling worker polls /api/order-status every 1 second — check Railway logs for these hits
+
+TELEGRAM NOTIFICATIONS:
+  • Not receiving messages? Check TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Railway vars
+  • The notification fires only when the success screen appears in the booking modal
+  • Railway logs should show "[Notify] Telegram sent for ORDER_ID"
+
+BOOKING MODAL NOT LOADING:
+  • Open browser devtools → check for console errors
+  • Check that header.php is the correct one (contains gsm-wrap iframe)
+  • Check that the Railway service is running (Railway dashboard → service status)
+
+CORS ERRORS:
+  • Set CORS_ORIGINS=* in Railway or set it to your WordPress domain exactly
+
+PRICES NOT MATCHING:
+  • Prices are seeded into prices.db on first run from DEFAULT_PRICES in server.py
+  • If prices.db already exists with old data, you need to delete it and redeploy
+  • prices.db is not committed to git — Railway creates a fresh one each deploy
+
+═══════════════════════════════════════════════════════════
+  SWITCHING BACK TO SANDBOX (LOCAL TESTING)
+═══════════════════════════════════════════════════════════
+
+  1. Start cloudflared tunnel:
+       cloudflared tunnel --url http://localhost:8080
+
+  2. Copy the trycloudflare.com URL it gives you.
+
+  3. In .env, set:
+       REVOLUT_ENV=sandbox
+       APP_URL=https://xxx.trycloudflare.com
+       SITE_URL=https://xxx.trycloudflare.com
+
+  4. Update the webhook to point to the tunnel URL:
+     Invoke-WebRequest -Uri "https://sandbox-merchant.revolut.com/api/1.0/webhooks/YOUR_WEBHOOK_ID" -Method PUT -Headers @{"Authorization"="Bearer YOUR_SANDBOX_SECRET_KEY"; "Content-Type"="application/json"} -Body '{"url":"https://xxx.trycloudflare.com/api/revolut-webhook","events":["ORDER_COMPLETED","ORDER_AUTHORISED"]}'
+
+  5. python server.py

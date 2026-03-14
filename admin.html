@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preturi — Admin</title>
+<style>
+:root{
+  --bg:#0d0c12;--surface:#16151f;--surface2:#1e1d2a;--border:#2a2840;
+  --text:#F4EDFF;--text2:#9d9bba;--text3:#5a5878;
+  --accent:#8176FF;--accent-glow:rgba(129,118,255,.12);
+  --green:#61CE70;--green-glow:rgba(97,206,112,.1);--red:#ff6b6b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Login ── */
+#login-screen{display:flex;align-items:center;justify-content:center;flex:1}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 36px;width:100%;max-width:360px;text-align:center}
+.login-box h1{font-size:1.5rem;margin-bottom:6px}
+.login-box h1 span{color:var(--accent)}
+.login-box p{color:var(--text3);font-size:.84rem;margin-bottom:28px}
+.login-box input{width:100%;padding:13px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;outline:none;transition:border-color .2s}
+.login-box input:focus{border-color:var(--accent)}
+.login-box button{width:100%;margin-top:12px;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.login-box button:hover{opacity:.85}
+.login-error{color:var(--red);font-size:.82rem;margin-top:10px;display:none}
+
+/* ── Shell ── */
+#admin-screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+
+/* top bar */
+.top-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;flex-shrink:0;overflow:hidden}
+.brand-tabs{display:flex;overflow-x:auto;flex:1;padding:0 8px;scrollbar-width:none}
+.brand-tabs::-webkit-scrollbar{display:none}
+.brand-tab{padding:0 16px;height:46px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:.83rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
+.brand-tab:hover{color:var(--text2)}
+.brand-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.top-right{display:flex;align-items:center;gap:10px;padding:0 14px;flex-shrink:0;border-left:1px solid var(--border)}
+.search-input{padding:6px 11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.83rem;outline:none;transition:border-color .2s;width:180px}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text3)}
+.save-ind{font-size:.75rem;min-width:72px;text-align:right;transition:color .3s;color:transparent;white-space:nowrap}
+.save-ind.saving{color:var(--accent)}
+.save-ind.saved{color:var(--green)}
+.save-ind.err{color:var(--red)}
+.logout-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:.78rem;transition:border-color .2s,color .2s;white-space:nowrap}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* sheet */
+.sheet-wrap{flex:1;overflow:auto}
+table{border-collapse:collapse;font-size:.84rem}
+thead th{
+  background:var(--surface2);color:var(--text2);font-weight:600;font-size:.72rem;
+  letter-spacing:.04em;text-transform:uppercase;padding:9px 6px;text-align:center;
+  border-bottom:2px solid var(--border);border-right:1px solid var(--border);
+  white-space:nowrap;position:sticky;top:0;z-index:3
+}
+thead th.col-model{
+  text-align:left;position:sticky;left:0;z-index:4;background:var(--surface2);
+  min-width:190px;padding-left:20px
+}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:hover{background:var(--accent-glow)}
+td{padding:0;border-right:1px solid var(--border)}
+td.col-model{
+  position:sticky;left:0;background:var(--surface);z-index:2;
+  padding:0 14px 0 20px;font-size:.83rem;font-weight:500;color:var(--text2);
+  white-space:nowrap;border-right:2px solid var(--border);height:38px;
+  vertical-align:middle
+}
+tbody tr:hover td.col-model{background:#1c1b2a}
+
+/* price input */
+.price-input{
+  display:block;width:88px;padding:9px 6px;background:transparent;border:none;
+  color:var(--green);font-size:.92rem;font-weight:700;text-align:center;
+  outline:none;transition:background .15s,color .15s;-moz-appearance:textfield
+}
+.price-input::-webkit-inner-spin-button,.price-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.price-input:focus{background:rgba(97,206,112,.08);color:var(--text)}
+.price-input.zero{color:var(--text3);font-weight:400}
+.price-input.flash-ok{animation:flashOk .4s ease}
+.price-input.flash-err{animation:flashErr .4s ease}
+@keyframes flashOk{0%{background:rgba(97,206,112,.25)}100%{background:transparent}}
+@keyframes flashErr{0%{background:rgba(255,107,107,.25)}100%{background:transparent}}
+
+/* service column controls */
+thead th.col-service{position:relative}
+thead th.col-service:hover .svc-remove{opacity:1}
+.svc-remove{
+  position:absolute;top:3px;right:3px;width:14px;height:14px;
+  background:none;border:none;color:var(--text3);font-size:.7rem;
+  cursor:pointer;opacity:0;transition:opacity .15s,color .15s;padding:0;line-height:1
+}
+.svc-remove:hover{color:var(--red)}
+.add-svc-th{
+  background:var(--surface2);border-bottom:2px solid var(--border);
+  border-right:1px solid var(--border);padding:0 8px;white-space:nowrap
+}
+.add-svc-btn{
+  padding:4px 10px;background:none;border:1px dashed var(--border);
+  border-radius:6px;color:var(--text3);font-size:.75rem;cursor:pointer;
+  transition:border-color .15s,color .15s;white-space:nowrap
+}
+.add-svc-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* empty */
+.empty{padding:60px;text-align:center;color:var(--text3);font-size:.9rem}
+
+/* toast */
+#toast{
+  position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  font-size:.82rem;font-weight:500;opacity:0;transform:translateY(8px);
+  transition:opacity .2s,transform .2s;pointer-events:none;z-index:999
+}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.ok{border-color:var(--green);color:var(--green)}
+#toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1><span>GSM</span> Admin</h1>
+    <p>Price Editor</p>
+    <form id="login-form">
+      <input type="text" id="user-input" placeholder="Utilizator" autocomplete="username" style="margin-bottom:10px">
+      <input type="password" id="pw-input" placeholder="Parola" autocomplete="current-password">
+      <button type="submit">Conectare</button>
+      <div class="login-error" id="login-error">Date incorecte</div>
+    </form>
+  </div>
+</div>
+
+<!-- Admin -->
+<div id="admin-screen">
+  <div class="top-bar">
+    <div class="brand-tabs" id="brand-tabs"></div>
+    <div class="top-right">
+      <input class="search-input" type="text" id="search-input" placeholder="Filtreaza model..." oninput="renderSheet()">
+      <div class="save-ind" id="save-ind"></div>
+      <button class="logout-btn" onclick="exportCSV()">Export CSV</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="sheet-wrap" id="sheet-wrap">
+    <div class="empty">Se incarca...</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let allPrices = [];
+let currentBrand = '';
+let saveQueue = {};
+let saveTimer = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('username', document.getElementById('user-input').value);
+  fd.append('password', document.getElementById('pw-input').value);
+  const res = await fetch('/admin/login', { method: 'POST', body: fd });
+  if (res.ok) { window.location.href = '/admin'; }
+  else { document.getElementById('login-error').style.display = 'block'; }
+});
+
+function logout() { window.location.href = '/admin/logout'; }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const res = await fetch('/api/admin/prices');
+  if (!res.ok || res.redirected) {
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
+  allPrices = await res.json();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'flex';
+  buildBrandTabs();
+  renderSheet();
+})();
+
+// ── Brand tabs ────────────────────────────────────────────────────────────────
+const BRAND_ORDER = ['iphone','samsung','huawei','xiaomi','oneplus','motorola','realme','honor','oppo','google','alte'];
+const BRAND_LABELS = {iphone:'iPhone',samsung:'Samsung',huawei:'Huawei',xiaomi:'Xiaomi',oneplus:'OnePlus',motorola:'Motorola',realme:'Realme',honor:'Honor',oppo:'Oppo',google:'Google',alte:'Alte'};
+
+function buildBrandTabs() {
+  const present = new Set(allPrices.map(r => r.brand));
+  const brands = BRAND_ORDER.filter(b => present.has(b))
+    .concat([...present].filter(b => !BRAND_ORDER.includes(b)).sort());
+  currentBrand = brands[0] || '';
+  const container = document.getElementById('brand-tabs');
+  container.innerHTML = brands.map(b =>
+    `<button class="brand-tab${b === currentBrand ? ' active' : ''}" data-brand="${b}" onclick="switchBrand('${b}')">${BRAND_LABELS[b] || cap(b)}</button>`
+  ).join('');
+}
+
+function switchBrand(brand) {
+  currentBrand = brand;
+  document.querySelectorAll('.brand-tab').forEach(el =>
+    el.classList.toggle('active', el.dataset.brand === brand)
+  );
+  document.getElementById('search-input').value = '';
+  renderSheet();
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderSheet() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const brandRows = allPrices.filter(r => r.brand === currentBrand);
+
+  // Preserve insertion order for models and services
+  const models = [], services = [];
+  brandRows.forEach(r => {
+    if (!models.includes(r.model)) models.push(r.model);
+    if (!services.includes(r.service)) services.push(r.service);
+  });
+
+  const filteredModels = q ? models.filter(m => m.toLowerCase().includes(q)) : models;
+
+  if (!filteredModels.length) {
+    document.getElementById('sheet-wrap').innerHTML = '<div class="empty">Nu s-au gasit modele.</div>';
+    return;
+  }
+
+  const lookup = {};
+  brandRows.forEach(r => { lookup[r.model + '|' + r.service] = r.price; });
+
+  const thead = `<thead><tr>
+    <th class="col-model">Model</th>
+    ${services.map(s => `<th class="col-service" title="${s}">${s}
+      <button class="svc-remove" title="Sterge serviciu" onclick="removeService(${JSON.stringify(s).replace(/"/g, '&quot;')})">✕</button>
+    </th>`).join('')}
+    <th class="add-svc-th"><button class="add-svc-btn" onclick="addService()">+ Serviciu</button></th>
+  </tr></thead>`;
+
+  const tbody = filteredModels.map(model => {
+    const cells = services.map(service => {
+      const key = `${currentBrand}||${model}||${service}`;
+      const price = lookup[model + '|' + service] ?? 0;
+      return `<td><input class="price-input${price === 0 ? ' zero' : ''}" type="number" min="0"
+        value="${price}" data-key="${key}" data-orig="${price}"
+        onblur="onBlur(this)" onfocus="this.select()" onkeydown="onKeyDown(event,this)"></td>`;
+    }).join('');
+    return `<tr><td class="col-model">${model}</td>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('sheet-wrap').innerHTML = `<table>${thead}<tbody>${tbody}</tbody></table>`;
+}
+
+// ── Input events ──────────────────────────────────────────────────────────────
+function onBlur(input) {
+  const orig = input.getAttribute('data-orig');
+  const val = input.value.trim();
+  if (val === orig) return;
+  const price = parseInt(val);
+  if (isNaN(price) || price < 0) { input.value = orig; return; }
+  input.setAttribute('data-orig', String(price));
+  input.classList.toggle('zero', price === 0);
+
+  const [brand, model, service] = input.dataset.key.split('||');
+  const entry = allPrices.find(r => r.brand === brand && r.model === model && r.service === service);
+  if (entry) entry.price = price;
+
+  saveQueue[input.dataset.key] = { brand, model, service, price };
+  setInd('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSaves, 500);
+}
+
+function onKeyDown(e, input) {
+  if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+  if (e.key === 'Escape') { input.value = input.getAttribute('data-orig'); input.blur(); }
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+async function flushSaves() {
+  const batch = Object.values(saveQueue);
+  saveQueue = {};
+  if (!batch.length) return;
+  try {
+    const res = await fetch('/api/admin/bulk-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(batch),
+    });
+    if (res.ok) {
+      setInd('saved');
+      setTimeout(() => setInd(''), 2000);
+    } else {
+      setInd('err');
+      toast('Eroare la salvare', 'err');
+    }
+  } catch {
+    setInd('err');
+    toast('Eroare retea', 'err');
+  }
+}
+
+function setInd(state) {
+  const el = document.getElementById('save-ind');
+  el.className = 'save-ind' + (state ? ' ' + state : '');
+  el.textContent = state === 'saving' ? 'Se salveaza…' : state === 'saved' ? 'Salvat ✓' : state === 'err' ? 'Eroare!' : '';
+}
+
+// ── Service add / remove ──────────────────────────────────────────────────────
+async function addService() {
+  const name = prompt('Nume serviciu nou:');
+  if (!name || !name.trim()) return;
+  const service = name.trim();
+  const res = await fetch('/api/admin/service/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ brand: currentBrand, service }),
+  });
+  if (res.ok) {
+    const brandRows = allPrices.filter(r => r.brand === currentBrand);
+    const models = [...new Set(brandRows.map(r => r.model))];
+    models.forEach(model => {
+      if (!allPrices.find(r => r.brand === currentBrand && r.model === model && r.service === service)) {
+        allPrices.push({ brand: currentBrand, model, service, price: 0 });
+      }
+    });
+    renderSheet();
+    toast('Serviciu adaugat', 'ok');
+  } else {
+    toast('Eroare la adaugare', 'err');
+  }
+}
+
+async function removeService(service) {
+  if (!confirm(`Stergi serviciul "${service}" pentru tot brandul ${currentBrand}?\nAcesta va fi eliminat din toate modelele.`)) return;
+  const res = await fetch('/api/admin/service/remove', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ brand: currentBrand, service }),
+  });
+  if (res.ok) {
+    allPrices = allPrices.filter(r => !(r.brand === currentBrand && r.service === service));
+    renderSheet();
+    toast('Serviciu eliminat', 'ok');
+  } else {
+    toast('Eroare la stergere', 'err');
+  }
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['Brand','Model','Serviciu','Pret']];
+  const BRAND_ORDER = ['iphone','samsung','huawei','xiaomi','oneplus','motorola','realme','honor','oppo','google','alte'];
+  const brands = [...new Set(allPrices.map(r => r.brand))].sort((a,b) => {
+    const ai = BRAND_ORDER.indexOf(a), bi = BRAND_ORDER.indexOf(b);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+  brands.forEach(brand => {
+    const brandRows = allPrices.filter(r => r.brand === brand);
+    const models = [], services = [];
+    brandRows.forEach(r => {
+      if (!models.includes(r.model)) models.push(r.model);
+      if (!services.includes(r.service)) services.push(r.service);
+    });
+    const lookup = {};
+    brandRows.forEach(r => { lookup[r.model + '|' + r.service] = r.price; });
+    models.forEach(model => {
+      services.forEach(service => {
+        const price = lookup[model + '|' + service] ?? 0;
+        rows.push([brand, model, service, price]);
+      });
+    });
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'preturi_gsm.csv';
+  a.click();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2400);
+}
+</script>
+</body>
+</html>

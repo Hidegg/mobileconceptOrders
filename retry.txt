@@ -1,0 +1,15 @@
+$body = @{
+    url    = "https://<YOUR_RAILWAY_APP>.railway.app/api/revolut-webhook"
+    events = @("ORDER_COMPLETED", "ORDER_AUTHORISED")
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod `
+    -Uri "https://merchant.revolut.com/api/1.0/webhooks" `
+    -Method Post `
+    -Headers @{
+        "Authorization" = "Bearer <YOUR_LIVE_SECRET_KEY>"
+        "Content-Type"  = "application/json"
+    } `
+    -Body $body
+
+$response | ConvertTo-Json -Depth 10 | Out-File -FilePath "webhook_response.json" -Encoding utf8
