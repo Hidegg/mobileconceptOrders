@@ -99,6 +99,17 @@ tbody tr:hover td.col-model{background:#1c1b2a}
 td.save-flash{animation:cellFlash .8s ease}
 @keyframes cellFlash{0%{background:rgba(97,206,112,.35)}40%{background:rgba(97,206,112,.18)}100%{background:transparent}}
 
+/* autofill */
+td{position:relative}
+.fill-handle{
+  position:absolute;right:-4px;bottom:-4px;width:8px;height:8px;
+  background:var(--accent);border:1.5px solid var(--bg);border-radius:1px;
+  cursor:crosshair;z-index:5;display:none
+}
+td.active-cell .fill-handle{display:block}
+td.active-cell{outline:2px solid var(--accent);outline-offset:-1px}
+td.fill-preview{background:rgba(129,118,255,.12)}
+
 /* service column controls */
 thead th.col-service{position:relative}
 thead th.col-service:hover .svc-remove{opacity:1}
@@ -159,6 +170,8 @@ thead th.col-service:hover .svc-remove{opacity:1}
       <button class="save-btn" id="save-btn" onclick="saveAll()">Salveaza</button>
       <div class="save-ind" id="save-ind"></div>
       <button class="logout-btn" onclick="exportCSV()">Export CSV</button>
+      <button class="logout-btn" onclick="document.getElementById('csv-file').click()">Import CSV</button>
+      <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV(this)">
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -264,7 +277,7 @@ function renderSheet() {
       const price = lookup[model + '|' + service] ?? 0;
       return `<td><input class="price-input${price === 0 ? ' zero' : ''}" type="number" min="0"
         value="${price}" data-key="${key}" data-orig="${price}"
-        onblur="onBlur(this)" onfocus="this.select()" onkeydown="onKeyDown(event,this)"></td>`;
+        onblur="onBlur(this)" onfocus="activateCell(this)" onkeydown="onKeyDown(event,this)"><div class="fill-handle" onmousedown="startFill(event)"></div></td>`;
     }).join('');
     return `<tr><td class="col-model">${model}</td>${cells}</tr>`;
   }).join('');
@@ -293,6 +306,85 @@ function onBlur(input) {
 function onKeyDown(e, input) {
   if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
   if (e.key === 'Escape') { input.value = input.getAttribute('data-orig'); input.blur(); }
+}
+
+// ── Autofill (Excel-like drag handle) ────────────────────────────────────────
+let fillSource = null;
+let fillPreviews = [];
+
+function activateCell(input) {
+  document.querySelectorAll('td.active-cell').forEach(td => td.classList.remove('active-cell'));
+  input.closest('td').classList.add('active-cell');
+  input.select();
+}
+
+function startFill(e) {
+  e.preventDefault();
+  const td = e.target.closest('td');
+  const input = td.querySelector('.price-input');
+  fillSource = { td, value: input.value, row: rowIndex(td), col: colIndex(td) };
+  fillPreviews = [];
+  document.addEventListener('mousemove', onFillMove);
+  document.addEventListener('mouseup', onFillEnd);
+}
+
+function rowIndex(td) {
+  return [...td.closest('tbody').rows].indexOf(td.closest('tr'));
+}
+function colIndex(td) {
+  return [...td.closest('tr').cells].indexOf(td);
+}
+
+function onFillMove(e) {
+  if (!fillSource) return;
+  // clear old previews
+  fillPreviews.forEach(td => td.classList.remove('fill-preview'));
+  fillPreviews = [];
+
+  const tbody = fillSource.td.closest('tbody');
+  const rows = [...tbody.rows];
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!el) return;
+  const hoverTd = el.closest('td');
+  if (!hoverTd || hoverTd.classList.contains('col-model')) return;
+  const hoverRow = rowIndex(hoverTd);
+  const hoverCol = colIndex(hoverTd);
+
+  // fill down (same column) or fill right (same row)
+  if (hoverCol === fillSource.col && hoverRow !== fillSource.row) {
+    const start = Math.min(fillSource.row, hoverRow);
+    const end = Math.max(fillSource.row, hoverRow);
+    for (let r = start; r <= end; r++) {
+      if (r === fillSource.row) continue;
+      const cell = rows[r]?.cells[fillSource.col];
+      if (cell) { cell.classList.add('fill-preview'); fillPreviews.push(cell); }
+    }
+  } else if (hoverRow === fillSource.row && hoverCol !== fillSource.col) {
+    const cells = [...rows[fillSource.row].cells];
+    const start = Math.min(fillSource.col, hoverCol);
+    const end = Math.max(fillSource.col, hoverCol);
+    for (let c = start; c <= end; c++) {
+      if (c === fillSource.col || c === 0) continue;
+      const cell = cells[c];
+      if (cell) { cell.classList.add('fill-preview'); fillPreviews.push(cell); }
+    }
+  }
+}
+
+function onFillEnd() {
+  document.removeEventListener('mousemove', onFillMove);
+  document.removeEventListener('mouseup', onFillEnd);
+  // apply value to all previewed cells
+  fillPreviews.forEach(td => {
+    td.classList.remove('fill-preview');
+    const input = td.querySelector('.price-input');
+    if (input) {
+      input.value = fillSource.value;
+      onBlur(input);  // marks as modified + adds to saveQueue
+    }
+  });
+  fillPreviews = [];
+  fillSource = null;
 }
 
 // ── Save ──────────────────────────────────────────────────────────────────────
@@ -427,6 +519,57 @@ function exportCSV() {
   a.href = URL.createObjectURL(blob);
   a.download = 'preturi_gsm.csv';
   a.click();
+}
+
+// ── Import CSV ───────────────────────────────────────────────────────────────
+async function importCSV(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (lines.length < 2) { toast('CSV gol', 'err'); return; }
+
+  // detect delimiter (tab or comma)
+  const header = lines[0];
+  const delim = header.includes('\t') ? '\t' : ',';
+  const cols = header.split(delim).map(c => c.replace(/^"|"$/g, '').trim().toLowerCase());
+
+  const iB = cols.findIndex(c => c === 'brand');
+  const iM = cols.findIndex(c => c === 'model');
+  const iS = cols.findIndex(c => c === 'serviciu' || c === 'service');
+  const iP = cols.findIndex(c => c === 'pret' || c === 'price');
+  if (iB < 0 || iM < 0 || iS < 0 || iP < 0) {
+    toast('CSV invalid — lipsesc coloane (Brand, Model, Serviciu, Pret)', 'err');
+    return;
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(delim).map(c => c.replace(/^"|"$/g, '').trim());
+    const price = parseInt(parts[iP]);
+    if (!parts[iB] || !parts[iM] || !parts[iS] || isNaN(price)) continue;
+    rows.push({ brand: parts[iB], model: parts[iM], service: parts[iS], price });
+  }
+
+  if (!rows.length) { toast('Niciun rand valid', 'err'); return; }
+  if (!confirm(`Importi ${rows.length} preturi din "${file.name}"?\nPreturile existente vor fi suprascrise.`)) return;
+
+  try {
+    const res = await fetch('/api/admin/bulk-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rows),
+    });
+    if (res.ok) {
+      toast(`${rows.length} preturi importate`, 'ok');
+      // reload all prices from server
+      const r2 = await fetch('/api/admin/prices');
+      if (r2.ok) { allPrices = await r2.json(); buildBrandTabs(); renderSheet(); }
+    } else {
+      toast('Eroare la import', 'err');
+    }
+  } catch { toast('Eroare retea', 'err'); }
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
