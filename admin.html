@@ -44,6 +44,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .save-ind.saving{color:var(--accent)}
 .save-ind.saved{color:var(--green)}
 .save-ind.err{color:var(--red)}
+.save-btn{
+  padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;
+  cursor:pointer;font-size:.82rem;font-weight:600;transition:opacity .2s,transform .1s;white-space:nowrap;
+  display:none
+}
+.save-btn:hover{opacity:.85}
+.save-btn:active{transform:scale(.97)}
+.save-btn .badge{
+  display:inline-block;margin-left:6px;padding:1px 7px;border-radius:10px;
+  background:rgba(255,255,255,.25);font-size:.72rem;font-weight:700
+}
+.price-input.modified{color:var(--accent) !important;font-weight:700}
 .logout-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:.78rem;transition:border-color .2s,color .2s;white-space:nowrap}
 .logout-btn:hover{border-color:var(--red);color:var(--red)}
 
@@ -84,6 +96,8 @@ tbody tr:hover td.col-model{background:#1c1b2a}
 .price-input.flash-err{animation:flashErr .4s ease}
 @keyframes flashOk{0%{background:rgba(97,206,112,.25)}100%{background:transparent}}
 @keyframes flashErr{0%{background:rgba(255,107,107,.25)}100%{background:transparent}}
+td.save-flash{animation:cellFlash .8s ease}
+@keyframes cellFlash{0%{background:rgba(97,206,112,.35)}40%{background:rgba(97,206,112,.18)}100%{background:transparent}}
 
 /* service column controls */
 thead th.col-service{position:relative}
@@ -142,6 +156,7 @@ thead th.col-service:hover .svc-remove{opacity:1}
     <div class="brand-tabs" id="brand-tabs"></div>
     <div class="top-right">
       <input class="search-input" type="text" id="search-input" placeholder="Filtreaza model..." oninput="renderSheet()">
+      <button class="save-btn" id="save-btn" onclick="saveAll()">Salveaza</button>
       <div class="save-ind" id="save-ind"></div>
       <button class="logout-btn" onclick="exportCSV()">Export CSV</button>
       <button class="logout-btn" onclick="logout()">Logout</button>
@@ -261,10 +276,9 @@ function renderSheet() {
 function onBlur(input) {
   const orig = input.getAttribute('data-orig');
   const val = input.value.trim();
-  if (val === orig) return;
+  if (val === orig) { input.classList.remove('modified'); return; }
   const price = parseInt(val);
-  if (isNaN(price) || price < 0) { input.value = orig; return; }
-  input.setAttribute('data-orig', String(price));
+  if (isNaN(price) || price < 0) { input.value = orig; input.classList.remove('modified'); return; }
   input.classList.toggle('zero', price === 0);
 
   const [brand, model, service] = input.dataset.key.split('||');
@@ -272,9 +286,8 @@ function onBlur(input) {
   if (entry) entry.price = price;
 
   saveQueue[input.dataset.key] = { brand, model, service, price };
-  setInd('saving');
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(flushSaves, 500);
+  input.classList.add('modified');
+  updateSaveBtn();
 }
 
 function onKeyDown(e, input) {
@@ -283,10 +296,24 @@ function onKeyDown(e, input) {
 }
 
 // ── Save ──────────────────────────────────────────────────────────────────────
-async function flushSaves() {
+function updateSaveBtn() {
+  const btn = document.getElementById('save-btn');
+  const count = Object.keys(saveQueue).length;
+  if (count > 0) {
+    btn.style.display = 'inline-block';
+    btn.innerHTML = `Salveaza <span class="badge">${count}</span>`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+async function saveAll() {
   const batch = Object.values(saveQueue);
-  saveQueue = {};
   if (!batch.length) return;
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Se salveaza…';
+  setInd('saving');
   try {
     const res = await fetch('/api/admin/bulk-import', {
       method: 'POST',
@@ -294,8 +321,23 @@ async function flushSaves() {
       body: JSON.stringify(batch),
     });
     if (res.ok) {
+      // Flash green on saved cells and clear modified state
+      Object.keys(saveQueue).forEach(key => {
+        const input = document.querySelector(`input[data-key="${key}"]`);
+        if (input) {
+          input.setAttribute('data-orig', input.value);
+          input.classList.remove('modified');
+          const td = input.closest('td');
+          td.classList.remove('save-flash');
+          void td.offsetWidth;          // reflow to restart animation
+          td.classList.add('save-flash');
+        }
+      });
+      saveQueue = {};
+      updateSaveBtn();
       setInd('saved');
       setTimeout(() => setInd(''), 2000);
+      toast(`${batch.length} pret${batch.length > 1 ? 'uri' : ''} salvat${batch.length > 1 ? 'e' : ''}`, 'ok');
     } else {
       setInd('err');
       toast('Eroare la salvare', 'err');
@@ -304,6 +346,8 @@ async function flushSaves() {
     setInd('err');
     toast('Eroare retea', 'err');
   }
+  btn.disabled = false;
+  updateSaveBtn();
 }
 
 function setInd(state) {

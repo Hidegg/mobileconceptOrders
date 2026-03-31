@@ -639,7 +639,7 @@ async function loadPrices() {
     BRANDS.forEach(b => {
       if (!data[b.id]) return;
       Object.entries(data[b.id]).forEach(([model, services]) => {
-        if (b.data[model]) b.data[model] = services;
+        b.data[model] = services;
       });
     });
   } catch (e) {

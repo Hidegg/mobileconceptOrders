@@ -344,7 +344,11 @@ def get_prices():
         if model not in result[brand]:
             result[brand][model] = {}
         result[brand][model][service] = price
-    return jsonify(result)
+    resp = jsonify(result)
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 
